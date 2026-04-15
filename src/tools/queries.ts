@@ -34,6 +34,7 @@ export async function getQuery(params: z.infer<typeof getQuerySchema>) {
 
 export const createQuerySchema = z.object({
   query: z.string().describe("SQL query string"),
+  service: z.string().describe("Database service name (e.g. 'my-bigquery-service')"),
   description: z.string().optional().describe("Query description in markdown"),
   name: z.string().optional().describe("Query name"),
   queryUsedIn: z.array(z.record(z.string(), z.any())).optional().describe("Entity references where this query is used"),

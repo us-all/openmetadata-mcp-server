@@ -135,7 +135,7 @@ export async function getDataProductByName(params: z.infer<typeof getDataProduct
 
 export const createDataProductSchema = z.object({
   name: z.string().describe("Data Product name"),
-  domain: z.string().describe("FQN of the parent domain"),
+  domains: z.array(z.string()).describe("List of parent domain FQNs (e.g. ['analytics'])"),
   description: z.string().optional().describe("Data Product description in markdown"),
   displayName: z.string().optional().describe("Display name"),
   owners: z.array(z.record(z.string(), z.any())).optional().describe("Owner references"),
@@ -145,7 +145,7 @@ export const createDataProductSchema = z.object({
 
 export async function createDataProduct(params: z.infer<typeof createDataProductSchema>) {
   assertWriteAllowed();
-  return omClient.post("/dataProducts", params);
+  return omClient.put("/dataProducts", params);
 }
 
 // --- update-data-product ---

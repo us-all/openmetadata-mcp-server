@@ -125,7 +125,11 @@ export const createGlossaryTermSchema = z.object({
 
 export async function createGlossaryTerm(params: z.infer<typeof createGlossaryTermSchema>) {
   assertWriteAllowed();
-  return omClient.post("/glossaryTerms", params);
+  const { glossary, ...rest } = params;
+  return omClient.put("/glossaryTerms", {
+    ...rest,
+    glossary: glossary,
+  });
 }
 
 export const updateGlossaryTermSchema = z.object({

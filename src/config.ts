@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export const config = {
   host: (process.env.OPENMETADATA_HOST ?? "").replace(/\/+$/, ""),
