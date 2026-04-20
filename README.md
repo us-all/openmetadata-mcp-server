@@ -1,6 +1,6 @@
 # OpenMetadata MCP Server
 
-MCP server for [OpenMetadata](https://open-metadata.org/) — 147 tools covering metadata management, data lineage, search, data quality, and more. Read-only by default.
+MCP server for [OpenMetadata](https://open-metadata.org/) — 153 tools covering metadata management, data lineage, search, data quality, and more. Read-only by default.
 
 ## Quick Start
 
@@ -58,7 +58,7 @@ docker run --rm -i \
 | `OPENMETADATA_TOKEN` | Yes | JWT or Bot token for authentication |
 | `OPENMETADATA_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
 
-## Tools (147)
+## Tools (153)
 
 ### Search (2)
 `search-metadata` `suggest-metadata`
@@ -125,6 +125,9 @@ docker run --rm -i \
 
 ### Bots (3)
 `list-bots` `get-bot` `get-bot-by-name`
+
+### Sample Data (6, read-only)
+`get-table-sample-data` `get-table-sample-data-by-name` `get-topic-sample-data` `get-topic-sample-data-by-name` `get-container-sample-data` `get-container-sample-data-by-name`
 
 ## Getting a Token
 
