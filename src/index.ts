@@ -115,6 +115,16 @@ import {
 } from "./tools/queries.js";
 import { listEventsSchema, listEvents, getEventSubscriptionSchema, getEventSubscription, getEventSubscriptionByNameSchema, getEventSubscriptionByName } from "./tools/events.js";
 import { listBotsSchema, listBots, getBotSchema, getBot, getBotByNameSchema, getBotByName } from "./tools/bots.js";
+import {
+  getTableSampleDataSchema, getTableSampleData,
+  getTableSampleDataByNameSchema, getTableSampleDataByName,
+  addTableSampleDataSchema, addTableSampleData,
+  deleteTableSampleDataSchema, deleteTableSampleData,
+  getTopicSampleDataSchema, getTopicSampleData,
+  getTopicSampleDataByNameSchema, getTopicSampleDataByName,
+  getContainerSampleDataSchema, getContainerSampleData,
+  getContainerSampleDataByNameSchema, getContainerSampleDataByName,
+} from "./tools/sample-data.js";
 
 validateConfig();
 
@@ -365,6 +375,17 @@ server.tool("get-event-subscription-by-name", "Get event subscription by name", 
 server.tool("list-bots", "List bots with pagination", listBotsSchema.shape, wrapToolHandler(listBots));
 server.tool("get-bot", "Get bot details by UUID", getBotSchema.shape, wrapToolHandler(getBot));
 server.tool("get-bot-by-name", "Get bot by name", getBotByNameSchema.shape, wrapToolHandler(getBotByName));
+
+// --- Sample Data ---
+
+server.tool("get-table-sample-data", "Get sample data rows for a table by UUID (use this instead of querying BigQuery directly)", getTableSampleDataSchema.shape, wrapToolHandler(getTableSampleData));
+server.tool("get-table-sample-data-by-name", "Get sample data rows for a table by fully qualified name", getTableSampleDataByNameSchema.shape, wrapToolHandler(getTableSampleDataByName));
+server.tool("add-table-sample-data", "Add or overwrite sample data rows for a table", addTableSampleDataSchema.shape, wrapToolHandler(addTableSampleData));
+server.tool("delete-table-sample-data", "Delete sample data for a table by UUID", deleteTableSampleDataSchema.shape, wrapToolHandler(deleteTableSampleData));
+server.tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", getTopicSampleDataSchema.shape, wrapToolHandler(getTopicSampleData));
+server.tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
+server.tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));
+server.tool("get-container-sample-data-by-name", "Get sample data for a storage container by fully qualified name", getContainerSampleDataByNameSchema.shape, wrapToolHandler(getContainerSampleDataByName));
 
 // Start server
 async function main() {
