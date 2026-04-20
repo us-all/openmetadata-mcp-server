@@ -118,8 +118,6 @@ import { listBotsSchema, listBots, getBotSchema, getBot, getBotByNameSchema, get
 import {
   getTableSampleDataSchema, getTableSampleData,
   getTableSampleDataByNameSchema, getTableSampleDataByName,
-  addTableSampleDataSchema, addTableSampleData,
-  deleteTableSampleDataSchema, deleteTableSampleData,
   getTopicSampleDataSchema, getTopicSampleData,
   getTopicSampleDataByNameSchema, getTopicSampleDataByName,
   getContainerSampleDataSchema, getContainerSampleData,
@@ -380,8 +378,6 @@ server.tool("get-bot-by-name", "Get bot by name", getBotByNameSchema.shape, wrap
 
 server.tool("get-table-sample-data", "Get sample data rows for a table by UUID (use this instead of querying BigQuery directly)", getTableSampleDataSchema.shape, wrapToolHandler(getTableSampleData));
 server.tool("get-table-sample-data-by-name", "Get sample data rows for a table by fully qualified name", getTableSampleDataByNameSchema.shape, wrapToolHandler(getTableSampleDataByName));
-server.tool("add-table-sample-data", "Add or overwrite sample data rows for a table", addTableSampleDataSchema.shape, wrapToolHandler(addTableSampleData));
-server.tool("delete-table-sample-data", "Delete sample data for a table by UUID", deleteTableSampleDataSchema.shape, wrapToolHandler(deleteTableSampleData));
 server.tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", getTopicSampleDataSchema.shape, wrapToolHandler(getTopicSampleData));
 server.tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
 server.tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));

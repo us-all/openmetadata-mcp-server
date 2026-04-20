@@ -1,6 +1,5 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
-import { assertWriteAllowed } from "./utils.js";
 
 // --- get-table-sample-data ---
 
@@ -21,31 +20,6 @@ export const getTableSampleDataByNameSchema = z.object({
 export async function getTableSampleDataByName(params: z.infer<typeof getTableSampleDataByNameSchema>) {
   const entity = await omClient.get<{ id: string }>(`/tables/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
   return omClient.get(`/tables/${entity.id}/sampleData`);
-}
-
-// --- add-table-sample-data ---
-
-export const addTableSampleDataSchema = z.object({
-  id: z.string().describe("Table UUID"),
-  columns: z.array(z.string()).describe("Column names in row-order (e.g. ['id','name'])"),
-  rows: z.array(z.array(z.any())).describe("Row values aligned to columns (e.g. [[1,'foo'],[2,'bar']])"),
-});
-
-export async function addTableSampleData(params: z.infer<typeof addTableSampleDataSchema>) {
-  assertWriteAllowed();
-  const { id, ...body } = params;
-  return omClient.put(`/tables/${id}/sampleData`, body);
-}
-
-// --- delete-table-sample-data ---
-
-export const deleteTableSampleDataSchema = z.object({
-  id: z.string().describe("Table UUID"),
-});
-
-export async function deleteTableSampleData(params: z.infer<typeof deleteTableSampleDataSchema>) {
-  assertWriteAllowed();
-  return omClient.delete(`/tables/${params.id}/sampleData`);
 }
 
 // --- get-topic-sample-data ---
