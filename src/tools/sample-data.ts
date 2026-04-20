@@ -19,7 +19,8 @@ export const getTableSampleDataByNameSchema = z.object({
 });
 
 export async function getTableSampleDataByName(params: z.infer<typeof getTableSampleDataByNameSchema>) {
-  return omClient.get(`/tables/name/${encodeURIComponent(params.fqn)}/sampleData`);
+  const entity = await omClient.get<{ id: string }>(`/tables/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
+  return omClient.get(`/tables/${entity.id}/sampleData`);
 }
 
 // --- add-table-sample-data ---
@@ -64,7 +65,8 @@ export const getTopicSampleDataByNameSchema = z.object({
 });
 
 export async function getTopicSampleDataByName(params: z.infer<typeof getTopicSampleDataByNameSchema>) {
-  return omClient.get(`/topics/name/${encodeURIComponent(params.fqn)}/sampleData`);
+  const entity = await omClient.get<{ id: string }>(`/topics/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
+  return omClient.get(`/topics/${entity.id}/sampleData`);
 }
 
 // --- get-container-sample-data ---
@@ -84,5 +86,6 @@ export const getContainerSampleDataByNameSchema = z.object({
 });
 
 export async function getContainerSampleDataByName(params: z.infer<typeof getContainerSampleDataByNameSchema>) {
-  return omClient.get(`/containers/name/${encodeURIComponent(params.fqn)}/sampleData`);
+  const entity = await omClient.get<{ id: string }>(`/containers/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
+  return omClient.get(`/containers/${entity.id}/sampleData`);
 }
