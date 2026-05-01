@@ -124,6 +124,7 @@ import {
   getContainerSampleDataByNameSchema, getContainerSampleDataByName,
 } from "./tools/sample-data.js";
 import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
+import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 
 validateConfig();
 
@@ -132,258 +133,288 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-// --- Search ---
+// --- Tool registration with category-based filtering (OM_TOOLS / OM_DISABLE) ---
+let currentCategory: Category = "search";
 
-server.tool("search-metadata", "Search OpenMetadata entities (tables, topics, dashboards, pipelines, glossary terms, etc.) by keyword", searchMetadataSchema.shape, wrapToolHandler(searchMetadata));
-server.tool("suggest-metadata", "Get autocomplete suggestions for OpenMetadata entity names", suggestMetadataSchema.shape, wrapToolHandler(suggestMetadata));
-server.tool("semantic-search", "Natural-language semantic search over OpenMetadata entities using vector embeddings (requires OM 1.12+ with semantic search enabled)", semanticSearchSchema.shape, wrapToolHandler(semanticSearch));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function tool(name: string, description: string, schema: any, handler: any): void {
+  registry.register(name, description, currentCategory);
+  if (registry.isEnabled(currentCategory)) {
+    server.tool(name, description, schema, handler);
+  }
+}
+
+// --- Search ---
+currentCategory = "search";
+
+tool("search-metadata", "Search OpenMetadata entities (tables, topics, dashboards, pipelines, glossary terms, etc.) by keyword", searchMetadataSchema.shape, wrapToolHandler(searchMetadata));
+tool("suggest-metadata", "Get autocomplete suggestions for OpenMetadata entity names", suggestMetadataSchema.shape, wrapToolHandler(suggestMetadata));
+tool("semantic-search", "Natural-language semantic search over OpenMetadata entities using vector embeddings (requires OM 1.12+ with semantic search enabled)", semanticSearchSchema.shape, wrapToolHandler(semanticSearch));
 
 // --- Tables ---
+currentCategory = "core";
 
-server.tool("list-tables", "List tables with pagination and optional field expansion", listTablesSchema.shape, wrapToolHandler(listTables));
-server.tool("get-table", "Get table details by UUID", getTableSchema.shape, wrapToolHandler(getTable));
-server.tool("get-table-by-name", "Get table details by fully qualified name", getTableByNameSchema.shape, wrapToolHandler(getTableByName));
-server.tool("create-table", "Create a new table in OpenMetadata", createTableSchema.shape, wrapToolHandler(createTable));
-server.tool("update-table", "Update a table using JSON Patch operations", updateTableSchema.shape, wrapToolHandler(updateTable));
-server.tool("delete-table", "Delete a table by UUID", deleteTableSchema.shape, wrapToolHandler(deleteTable));
+tool("list-tables", "List tables with pagination and optional field expansion", listTablesSchema.shape, wrapToolHandler(listTables));
+tool("get-table", "Get table details by UUID", getTableSchema.shape, wrapToolHandler(getTable));
+tool("get-table-by-name", "Get table details by fully qualified name", getTableByNameSchema.shape, wrapToolHandler(getTableByName));
+tool("create-table", "Create a new table in OpenMetadata", createTableSchema.shape, wrapToolHandler(createTable));
+tool("update-table", "Update a table using JSON Patch operations", updateTableSchema.shape, wrapToolHandler(updateTable));
+tool("delete-table", "Delete a table by UUID", deleteTableSchema.shape, wrapToolHandler(deleteTable));
 
 // --- Databases ---
 
-server.tool("list-databases", "List databases with pagination and service filtering", listDatabasesSchema.shape, wrapToolHandler(listDatabases));
-server.tool("get-database", "Get database details by UUID", getDatabaseSchema.shape, wrapToolHandler(getDatabase));
-server.tool("get-database-by-name", "Get database details by fully qualified name", getDatabaseByNameSchema.shape, wrapToolHandler(getDatabaseByName));
-server.tool("create-database", "Create a new database in OpenMetadata", createDatabaseSchema.shape, wrapToolHandler(createDatabase));
-server.tool("update-database", "Update a database using JSON Patch operations", updateDatabaseSchema.shape, wrapToolHandler(updateDatabase));
-server.tool("delete-database", "Delete a database by UUID", deleteDatabaseSchema.shape, wrapToolHandler(deleteDatabase));
+tool("list-databases", "List databases with pagination and service filtering", listDatabasesSchema.shape, wrapToolHandler(listDatabases));
+tool("get-database", "Get database details by UUID", getDatabaseSchema.shape, wrapToolHandler(getDatabase));
+tool("get-database-by-name", "Get database details by fully qualified name", getDatabaseByNameSchema.shape, wrapToolHandler(getDatabaseByName));
+tool("create-database", "Create a new database in OpenMetadata", createDatabaseSchema.shape, wrapToolHandler(createDatabase));
+tool("update-database", "Update a database using JSON Patch operations", updateDatabaseSchema.shape, wrapToolHandler(updateDatabase));
+tool("delete-database", "Delete a database by UUID", deleteDatabaseSchema.shape, wrapToolHandler(deleteDatabase));
 
 // --- Database Schemas ---
 
-server.tool("list-schemas", "List database schemas with pagination", listSchemasSchema.shape, wrapToolHandler(listSchemas));
-server.tool("get-schema", "Get database schema details by UUID", getSchemaSchema.shape, wrapToolHandler(getSchema));
-server.tool("get-schema-by-name", "Get database schema details by fully qualified name", getSchemaByNameSchema.shape, wrapToolHandler(getSchemaByName));
-server.tool("create-schema", "Create a new database schema", createSchemaSchema.shape, wrapToolHandler(createSchema));
-server.tool("update-schema", "Update a database schema using JSON Patch operations", updateSchemaSchema.shape, wrapToolHandler(updateSchema));
-server.tool("delete-schema", "Delete a database schema by UUID", deleteSchemaSchema.shape, wrapToolHandler(deleteSchema));
+tool("list-schemas", "List database schemas with pagination", listSchemasSchema.shape, wrapToolHandler(listSchemas));
+tool("get-schema", "Get database schema details by UUID", getSchemaSchema.shape, wrapToolHandler(getSchema));
+tool("get-schema-by-name", "Get database schema details by fully qualified name", getSchemaByNameSchema.shape, wrapToolHandler(getSchemaByName));
+tool("create-schema", "Create a new database schema", createSchemaSchema.shape, wrapToolHandler(createSchema));
+tool("update-schema", "Update a database schema using JSON Patch operations", updateSchemaSchema.shape, wrapToolHandler(updateSchema));
+tool("delete-schema", "Delete a database schema by UUID", deleteSchemaSchema.shape, wrapToolHandler(deleteSchema));
 
 // --- Lineage ---
 
-server.tool("get-lineage", "Get upstream and downstream lineage for an entity by UUID", getLineageSchema.shape, wrapToolHandler(getLineage));
-server.tool("get-lineage-by-name", "Get upstream and downstream lineage for an entity by FQN", getLineageByNameSchema.shape, wrapToolHandler(getLineageByName));
-server.tool("add-lineage", "Add or update lineage edge between two entities", addLineageSchema.shape, wrapToolHandler(addLineage));
-server.tool("delete-lineage", "Delete a lineage edge between two entities", deleteLineageSchema.shape, wrapToolHandler(deleteLineage));
+tool("get-lineage", "Get upstream and downstream lineage for an entity by UUID", getLineageSchema.shape, wrapToolHandler(getLineage));
+tool("get-lineage-by-name", "Get upstream and downstream lineage for an entity by FQN", getLineageByNameSchema.shape, wrapToolHandler(getLineageByName));
+tool("add-lineage", "Add or update lineage edge between two entities", addLineageSchema.shape, wrapToolHandler(addLineage));
+tool("delete-lineage", "Delete a lineage edge between two entities", deleteLineageSchema.shape, wrapToolHandler(deleteLineage));
 
 // --- Database Services ---
+currentCategory = "services";
 
-server.tool("list-database-services", "List database services (connectors)", listDatabaseServicesSchema.shape, wrapToolHandler(listDatabaseServices));
-server.tool("get-database-service", "Get database service details by UUID", getDatabaseServiceSchema.shape, wrapToolHandler(getDatabaseService));
-server.tool("get-database-service-by-name", "Get database service by name", getDatabaseServiceByNameSchema.shape, wrapToolHandler(getDatabaseServiceByName));
-server.tool("create-database-service", "Create a new database service connector", createDatabaseServiceSchema.shape, wrapToolHandler(createDatabaseService));
-server.tool("update-database-service", "Update a database service using JSON Patch", updateDatabaseServiceSchema.shape, wrapToolHandler(updateDatabaseService));
-server.tool("delete-database-service", "Delete a database service", deleteDatabaseServiceSchema.shape, wrapToolHandler(deleteDatabaseService));
+tool("list-database-services", "List database services (connectors)", listDatabaseServicesSchema.shape, wrapToolHandler(listDatabaseServices));
+tool("get-database-service", "Get database service details by UUID", getDatabaseServiceSchema.shape, wrapToolHandler(getDatabaseService));
+tool("get-database-service-by-name", "Get database service by name", getDatabaseServiceByNameSchema.shape, wrapToolHandler(getDatabaseServiceByName));
+tool("create-database-service", "Create a new database service connector", createDatabaseServiceSchema.shape, wrapToolHandler(createDatabaseService));
+tool("update-database-service", "Update a database service using JSON Patch", updateDatabaseServiceSchema.shape, wrapToolHandler(updateDatabaseService));
+tool("delete-database-service", "Delete a database service", deleteDatabaseServiceSchema.shape, wrapToolHandler(deleteDatabaseService));
 
 // --- Dashboard Services ---
 
-server.tool("list-dashboard-services", "List dashboard services", listDashboardServicesSchema.shape, wrapToolHandler(listDashboardServices));
-server.tool("get-dashboard-service", "Get dashboard service by name", getDashboardServiceSchema.shape, wrapToolHandler(getDashboardService));
+tool("list-dashboard-services", "List dashboard services", listDashboardServicesSchema.shape, wrapToolHandler(listDashboardServices));
+tool("get-dashboard-service", "Get dashboard service by name", getDashboardServiceSchema.shape, wrapToolHandler(getDashboardService));
 
 // --- Messaging Services ---
 
-server.tool("list-messaging-services", "List messaging services (Kafka, etc.)", listMessagingServicesSchema.shape, wrapToolHandler(listMessagingServices));
-server.tool("get-messaging-service", "Get messaging service by name", getMessagingServiceSchema.shape, wrapToolHandler(getMessagingService));
+tool("list-messaging-services", "List messaging services (Kafka, etc.)", listMessagingServicesSchema.shape, wrapToolHandler(listMessagingServices));
+tool("get-messaging-service", "Get messaging service by name", getMessagingServiceSchema.shape, wrapToolHandler(getMessagingService));
 
 // --- Pipeline Services ---
 
-server.tool("list-pipeline-services", "List pipeline services (Airflow, etc.)", listPipelineServicesSchema.shape, wrapToolHandler(listPipelineServices));
-server.tool("get-pipeline-service", "Get pipeline service by name", getPipelineServiceSchema.shape, wrapToolHandler(getPipelineService));
+tool("list-pipeline-services", "List pipeline services (Airflow, etc.)", listPipelineServicesSchema.shape, wrapToolHandler(listPipelineServices));
+tool("get-pipeline-service", "Get pipeline service by name", getPipelineServiceSchema.shape, wrapToolHandler(getPipelineService));
 
 // --- ML Model Services ---
 
-server.tool("list-ml-model-services", "List ML model services", listMlModelServicesSchema.shape, wrapToolHandler(listMlModelServices));
-server.tool("get-ml-model-service", "Get ML model service by name", getMlModelServiceSchema.shape, wrapToolHandler(getMlModelService));
+tool("list-ml-model-services", "List ML model services", listMlModelServicesSchema.shape, wrapToolHandler(listMlModelServices));
+tool("get-ml-model-service", "Get ML model service by name", getMlModelServiceSchema.shape, wrapToolHandler(getMlModelService));
 
 // --- Storage Services ---
 
-server.tool("list-storage-services", "List storage services (S3, GCS, etc.)", listStorageServicesSchema.shape, wrapToolHandler(listStorageServices));
-server.tool("get-storage-service", "Get storage service by name", getStorageServiceSchema.shape, wrapToolHandler(getStorageService));
+tool("list-storage-services", "List storage services (S3, GCS, etc.)", listStorageServicesSchema.shape, wrapToolHandler(listStorageServices));
+tool("get-storage-service", "Get storage service by name", getStorageServiceSchema.shape, wrapToolHandler(getStorageService));
 
 // --- Glossaries ---
+currentCategory = "governance";
 
-server.tool("list-glossaries", "List glossaries with pagination", listGlossariesSchema.shape, wrapToolHandler(listGlossaries));
-server.tool("get-glossary", "Get glossary details by UUID", getGlossarySchema.shape, wrapToolHandler(getGlossary));
-server.tool("get-glossary-by-name", "Get glossary details by name", getGlossaryByNameSchema.shape, wrapToolHandler(getGlossaryByName));
-server.tool("create-glossary", "Create a new glossary for business terms", createGlossarySchema.shape, wrapToolHandler(createGlossary));
-server.tool("update-glossary", "Update a glossary using JSON Patch operations", updateGlossarySchema.shape, wrapToolHandler(updateGlossary));
-server.tool("delete-glossary", "Delete a glossary by UUID", deleteGlossarySchema.shape, wrapToolHandler(deleteGlossary));
+tool("list-glossaries", "List glossaries with pagination", listGlossariesSchema.shape, wrapToolHandler(listGlossaries));
+tool("get-glossary", "Get glossary details by UUID", getGlossarySchema.shape, wrapToolHandler(getGlossary));
+tool("get-glossary-by-name", "Get glossary details by name", getGlossaryByNameSchema.shape, wrapToolHandler(getGlossaryByName));
+tool("create-glossary", "Create a new glossary for business terms", createGlossarySchema.shape, wrapToolHandler(createGlossary));
+tool("update-glossary", "Update a glossary using JSON Patch operations", updateGlossarySchema.shape, wrapToolHandler(updateGlossary));
+tool("delete-glossary", "Delete a glossary by UUID", deleteGlossarySchema.shape, wrapToolHandler(deleteGlossary));
 
 // --- Glossary Terms ---
 
-server.tool("list-glossary-terms", "List glossary terms with pagination and glossary filtering", listGlossaryTermsSchema.shape, wrapToolHandler(listGlossaryTerms));
-server.tool("get-glossary-term", "Get glossary term details by UUID", getGlossaryTermSchema.shape, wrapToolHandler(getGlossaryTerm));
-server.tool("get-glossary-term-by-name", "Get glossary term by fully qualified name", getGlossaryTermByNameSchema.shape, wrapToolHandler(getGlossaryTermByName));
-server.tool("create-glossary-term", "Create a new glossary term", createGlossaryTermSchema.shape, wrapToolHandler(createGlossaryTerm));
-server.tool("update-glossary-term", "Update a glossary term using JSON Patch operations", updateGlossaryTermSchema.shape, wrapToolHandler(updateGlossaryTerm));
-server.tool("delete-glossary-term", "Delete a glossary term by UUID", deleteGlossaryTermSchema.shape, wrapToolHandler(deleteGlossaryTerm));
+tool("list-glossary-terms", "List glossary terms with pagination and glossary filtering", listGlossaryTermsSchema.shape, wrapToolHandler(listGlossaryTerms));
+tool("get-glossary-term", "Get glossary term details by UUID", getGlossaryTermSchema.shape, wrapToolHandler(getGlossaryTerm));
+tool("get-glossary-term-by-name", "Get glossary term by fully qualified name", getGlossaryTermByNameSchema.shape, wrapToolHandler(getGlossaryTermByName));
+tool("create-glossary-term", "Create a new glossary term", createGlossaryTermSchema.shape, wrapToolHandler(createGlossaryTerm));
+tool("update-glossary-term", "Update a glossary term using JSON Patch operations", updateGlossaryTermSchema.shape, wrapToolHandler(updateGlossaryTerm));
+tool("delete-glossary-term", "Delete a glossary term by UUID", deleteGlossaryTermSchema.shape, wrapToolHandler(deleteGlossaryTerm));
 
 // --- Dashboards ---
+currentCategory = "discovery";
 
-server.tool("list-dashboards", "List dashboards with pagination and service filtering", listDashboardsSchema.shape, wrapToolHandler(listDashboards));
-server.tool("get-dashboard", "Get dashboard details by UUID", getDashboardSchema.shape, wrapToolHandler(getDashboard));
-server.tool("get-dashboard-by-name", "Get dashboard by fully qualified name", getDashboardByNameSchema.shape, wrapToolHandler(getDashboardByName));
-server.tool("create-dashboard", "Create a new dashboard", createDashboardSchema.shape, wrapToolHandler(createDashboard));
-server.tool("update-dashboard", "Update a dashboard using JSON Patch operations", updateDashboardSchema.shape, wrapToolHandler(updateDashboard));
-server.tool("delete-dashboard", "Delete a dashboard by UUID", deleteDashboardSchema.shape, wrapToolHandler(deleteDashboard));
+tool("list-dashboards", "List dashboards with pagination and service filtering", listDashboardsSchema.shape, wrapToolHandler(listDashboards));
+tool("get-dashboard", "Get dashboard details by UUID", getDashboardSchema.shape, wrapToolHandler(getDashboard));
+tool("get-dashboard-by-name", "Get dashboard by fully qualified name", getDashboardByNameSchema.shape, wrapToolHandler(getDashboardByName));
+tool("create-dashboard", "Create a new dashboard", createDashboardSchema.shape, wrapToolHandler(createDashboard));
+tool("update-dashboard", "Update a dashboard using JSON Patch operations", updateDashboardSchema.shape, wrapToolHandler(updateDashboard));
+tool("delete-dashboard", "Delete a dashboard by UUID", deleteDashboardSchema.shape, wrapToolHandler(deleteDashboard));
 
 // --- Pipelines ---
 
-server.tool("list-pipelines", "List pipelines with pagination and service filtering", listPipelinesSchema.shape, wrapToolHandler(listPipelines));
-server.tool("get-pipeline", "Get pipeline details by UUID", getPipelineSchema.shape, wrapToolHandler(getPipeline));
-server.tool("get-pipeline-by-name", "Get pipeline by fully qualified name", getPipelineByNameSchema.shape, wrapToolHandler(getPipelineByName));
-server.tool("create-pipeline", "Create a new pipeline", createPipelineSchema.shape, wrapToolHandler(createPipeline));
-server.tool("update-pipeline", "Update a pipeline using JSON Patch operations", updatePipelineSchema.shape, wrapToolHandler(updatePipeline));
-server.tool("delete-pipeline", "Delete a pipeline by UUID", deletePipelineSchema.shape, wrapToolHandler(deletePipeline));
+tool("list-pipelines", "List pipelines with pagination and service filtering", listPipelinesSchema.shape, wrapToolHandler(listPipelines));
+tool("get-pipeline", "Get pipeline details by UUID", getPipelineSchema.shape, wrapToolHandler(getPipeline));
+tool("get-pipeline-by-name", "Get pipeline by fully qualified name", getPipelineByNameSchema.shape, wrapToolHandler(getPipelineByName));
+tool("create-pipeline", "Create a new pipeline", createPipelineSchema.shape, wrapToolHandler(createPipeline));
+tool("update-pipeline", "Update a pipeline using JSON Patch operations", updatePipelineSchema.shape, wrapToolHandler(updatePipeline));
+tool("delete-pipeline", "Delete a pipeline by UUID", deletePipelineSchema.shape, wrapToolHandler(deletePipeline));
 
 // --- Topics ---
 
-server.tool("list-topics", "List topics (Kafka, etc.) with pagination", listTopicsSchema.shape, wrapToolHandler(listTopics));
-server.tool("get-topic", "Get topic details by UUID", getTopicSchema.shape, wrapToolHandler(getTopic));
-server.tool("get-topic-by-name", "Get topic by fully qualified name", getTopicByNameSchema.shape, wrapToolHandler(getTopicByName));
-server.tool("create-topic", "Create a new topic", createTopicSchema.shape, wrapToolHandler(createTopic));
-server.tool("update-topic", "Update a topic using JSON Patch operations", updateTopicSchema.shape, wrapToolHandler(updateTopic));
-server.tool("delete-topic", "Delete a topic by UUID", deleteTopicSchema.shape, wrapToolHandler(deleteTopic));
+tool("list-topics", "List topics (Kafka, etc.) with pagination", listTopicsSchema.shape, wrapToolHandler(listTopics));
+tool("get-topic", "Get topic details by UUID", getTopicSchema.shape, wrapToolHandler(getTopic));
+tool("get-topic-by-name", "Get topic by fully qualified name", getTopicByNameSchema.shape, wrapToolHandler(getTopicByName));
+tool("create-topic", "Create a new topic", createTopicSchema.shape, wrapToolHandler(createTopic));
+tool("update-topic", "Update a topic using JSON Patch operations", updateTopicSchema.shape, wrapToolHandler(updateTopic));
+tool("delete-topic", "Delete a topic by UUID", deleteTopicSchema.shape, wrapToolHandler(deleteTopic));
 
 // --- Charts ---
 
-server.tool("list-charts", "List charts with pagination and service filtering", listChartsSchema.shape, wrapToolHandler(listCharts));
-server.tool("get-chart", "Get chart details by UUID", getChartSchema.shape, wrapToolHandler(getChart));
-server.tool("get-chart-by-name", "Get chart by fully qualified name", getChartByNameSchema.shape, wrapToolHandler(getChartByName));
-server.tool("create-chart", "Create a new chart", createChartSchema.shape, wrapToolHandler(createChart));
-server.tool("update-chart", "Update a chart using JSON Patch operations", updateChartSchema.shape, wrapToolHandler(updateChart));
-server.tool("delete-chart", "Delete a chart by UUID", deleteChartSchema.shape, wrapToolHandler(deleteChart));
+tool("list-charts", "List charts with pagination and service filtering", listChartsSchema.shape, wrapToolHandler(listCharts));
+tool("get-chart", "Get chart details by UUID", getChartSchema.shape, wrapToolHandler(getChart));
+tool("get-chart-by-name", "Get chart by fully qualified name", getChartByNameSchema.shape, wrapToolHandler(getChartByName));
+tool("create-chart", "Create a new chart", createChartSchema.shape, wrapToolHandler(createChart));
+tool("update-chart", "Update a chart using JSON Patch operations", updateChartSchema.shape, wrapToolHandler(updateChart));
+tool("delete-chart", "Delete a chart by UUID", deleteChartSchema.shape, wrapToolHandler(deleteChart));
 
 // --- Containers ---
 
-server.tool("list-containers", "List storage containers with pagination", listContainersSchema.shape, wrapToolHandler(listContainers));
-server.tool("get-container", "Get container details by UUID", getContainerSchema.shape, wrapToolHandler(getContainer));
-server.tool("get-container-by-name", "Get container by fully qualified name", getContainerByNameSchema.shape, wrapToolHandler(getContainerByName));
-server.tool("create-container", "Create a new storage container", createContainerSchema.shape, wrapToolHandler(createContainer));
-server.tool("update-container", "Update a container using JSON Patch operations", updateContainerSchema.shape, wrapToolHandler(updateContainer));
-server.tool("delete-container", "Delete a container by UUID", deleteContainerSchema.shape, wrapToolHandler(deleteContainer));
+tool("list-containers", "List storage containers with pagination", listContainersSchema.shape, wrapToolHandler(listContainers));
+tool("get-container", "Get container details by UUID", getContainerSchema.shape, wrapToolHandler(getContainer));
+tool("get-container-by-name", "Get container by fully qualified name", getContainerByNameSchema.shape, wrapToolHandler(getContainerByName));
+tool("create-container", "Create a new storage container", createContainerSchema.shape, wrapToolHandler(createContainer));
+tool("update-container", "Update a container using JSON Patch operations", updateContainerSchema.shape, wrapToolHandler(updateContainer));
+tool("delete-container", "Delete a container by UUID", deleteContainerSchema.shape, wrapToolHandler(deleteContainer));
 
 // --- ML Models ---
 
-server.tool("list-ml-models", "List ML models with pagination and service filtering", listMlModelsSchema.shape, wrapToolHandler(listMlModels));
-server.tool("get-ml-model", "Get ML model details by UUID", getMlModelSchema.shape, wrapToolHandler(getMlModel));
-server.tool("get-ml-model-by-name", "Get ML model by fully qualified name", getMlModelByNameSchema.shape, wrapToolHandler(getMlModelByName));
-server.tool("create-ml-model", "Create a new ML model", createMlModelSchema.shape, wrapToolHandler(createMlModel));
-server.tool("update-ml-model", "Update an ML model using JSON Patch operations", updateMlModelSchema.shape, wrapToolHandler(updateMlModel));
-server.tool("delete-ml-model", "Delete an ML model by UUID", deleteMlModelSchema.shape, wrapToolHandler(deleteMlModel));
+tool("list-ml-models", "List ML models with pagination and service filtering", listMlModelsSchema.shape, wrapToolHandler(listMlModels));
+tool("get-ml-model", "Get ML model details by UUID", getMlModelSchema.shape, wrapToolHandler(getMlModel));
+tool("get-ml-model-by-name", "Get ML model by fully qualified name", getMlModelByNameSchema.shape, wrapToolHandler(getMlModelByName));
+tool("create-ml-model", "Create a new ML model", createMlModelSchema.shape, wrapToolHandler(createMlModel));
+tool("update-ml-model", "Update an ML model using JSON Patch operations", updateMlModelSchema.shape, wrapToolHandler(updateMlModel));
+tool("delete-ml-model", "Delete an ML model by UUID", deleteMlModelSchema.shape, wrapToolHandler(deleteMlModel));
 
 // --- Classifications ---
+currentCategory = "governance";
 
-server.tool("list-classifications", "List tag classifications", listClassificationsSchema.shape, wrapToolHandler(listClassifications));
-server.tool("get-classification", "Get classification details by name", getClassificationSchema.shape, wrapToolHandler(getClassification));
-server.tool("create-classification", "Create a new tag classification", createClassificationSchema.shape, wrapToolHandler(createClassification));
-server.tool("delete-classification", "Delete a tag classification", deleteClassificationSchema.shape, wrapToolHandler(deleteClassification));
+tool("list-classifications", "List tag classifications", listClassificationsSchema.shape, wrapToolHandler(listClassifications));
+tool("get-classification", "Get classification details by name", getClassificationSchema.shape, wrapToolHandler(getClassification));
+tool("create-classification", "Create a new tag classification", createClassificationSchema.shape, wrapToolHandler(createClassification));
+tool("delete-classification", "Delete a tag classification", deleteClassificationSchema.shape, wrapToolHandler(deleteClassification));
 
 // --- Tags ---
 
-server.tool("list-tags", "List tags with pagination and classification filtering", listTagsSchema.shape, wrapToolHandler(listTags));
-server.tool("get-tag", "Get tag details by UUID", getTagSchema.shape, wrapToolHandler(getTag));
-server.tool("get-tag-by-name", "Get tag by fully qualified name", getTagByNameSchema.shape, wrapToolHandler(getTagByName));
-server.tool("create-tag", "Create a new tag under a classification", createTagSchema.shape, wrapToolHandler(createTag));
-server.tool("update-tag", "Update a tag using JSON Patch operations", updateTagSchema.shape, wrapToolHandler(updateTag));
-server.tool("delete-tag", "Delete a tag by UUID", deleteTagSchema.shape, wrapToolHandler(deleteTag));
+tool("list-tags", "List tags with pagination and classification filtering", listTagsSchema.shape, wrapToolHandler(listTags));
+tool("get-tag", "Get tag details by UUID", getTagSchema.shape, wrapToolHandler(getTag));
+tool("get-tag-by-name", "Get tag by fully qualified name", getTagByNameSchema.shape, wrapToolHandler(getTagByName));
+tool("create-tag", "Create a new tag under a classification", createTagSchema.shape, wrapToolHandler(createTag));
+tool("update-tag", "Update a tag using JSON Patch operations", updateTagSchema.shape, wrapToolHandler(updateTag));
+tool("delete-tag", "Delete a tag by UUID", deleteTagSchema.shape, wrapToolHandler(deleteTag));
 
 // --- Domains ---
 
-server.tool("list-domains", "List domains with pagination", listDomainsSchema.shape, wrapToolHandler(listDomains));
-server.tool("get-domain", "Get domain details by UUID", getDomainSchema.shape, wrapToolHandler(getDomain));
-server.tool("get-domain-by-name", "Get domain by name", getDomainByNameSchema.shape, wrapToolHandler(getDomainByName));
-server.tool("create-domain", "Create a new domain", createDomainSchema.shape, wrapToolHandler(createDomain));
-server.tool("update-domain", "Update a domain using JSON Patch operations", updateDomainSchema.shape, wrapToolHandler(updateDomain));
-server.tool("delete-domain", "Delete a domain by UUID", deleteDomainSchema.shape, wrapToolHandler(deleteDomain));
+tool("list-domains", "List domains with pagination", listDomainsSchema.shape, wrapToolHandler(listDomains));
+tool("get-domain", "Get domain details by UUID", getDomainSchema.shape, wrapToolHandler(getDomain));
+tool("get-domain-by-name", "Get domain by name", getDomainByNameSchema.shape, wrapToolHandler(getDomainByName));
+tool("create-domain", "Create a new domain", createDomainSchema.shape, wrapToolHandler(createDomain));
+tool("update-domain", "Update a domain using JSON Patch operations", updateDomainSchema.shape, wrapToolHandler(updateDomain));
+tool("delete-domain", "Delete a domain by UUID", deleteDomainSchema.shape, wrapToolHandler(deleteDomain));
 
 // --- Data Products ---
 
-server.tool("list-data-products", "List data products with pagination", listDataProductsSchema.shape, wrapToolHandler(listDataProducts));
-server.tool("get-data-product", "Get data product details by UUID", getDataProductSchema.shape, wrapToolHandler(getDataProduct));
-server.tool("get-data-product-by-name", "Get data product by fully qualified name", getDataProductByNameSchema.shape, wrapToolHandler(getDataProductByName));
-server.tool("create-data-product", "Create a new data product", createDataProductSchema.shape, wrapToolHandler(createDataProduct));
-server.tool("update-data-product", "Update a data product using JSON Patch operations", updateDataProductSchema.shape, wrapToolHandler(updateDataProduct));
-server.tool("delete-data-product", "Delete a data product by UUID", deleteDataProductSchema.shape, wrapToolHandler(deleteDataProduct));
+tool("list-data-products", "List data products with pagination", listDataProductsSchema.shape, wrapToolHandler(listDataProducts));
+tool("get-data-product", "Get data product details by UUID", getDataProductSchema.shape, wrapToolHandler(getDataProduct));
+tool("get-data-product-by-name", "Get data product by fully qualified name", getDataProductByNameSchema.shape, wrapToolHandler(getDataProductByName));
+tool("create-data-product", "Create a new data product", createDataProductSchema.shape, wrapToolHandler(createDataProduct));
+tool("update-data-product", "Update a data product using JSON Patch operations", updateDataProductSchema.shape, wrapToolHandler(updateDataProduct));
+tool("delete-data-product", "Delete a data product by UUID", deleteDataProductSchema.shape, wrapToolHandler(deleteDataProduct));
 
 // --- Users ---
+currentCategory = "admin";
 
-server.tool("list-users", "List users with pagination and team filtering", listUsersSchema.shape, wrapToolHandler(listUsers));
-server.tool("get-user", "Get user details by UUID", getUserSchema.shape, wrapToolHandler(getUser));
-server.tool("get-user-by-name", "Get user by username", getUserByNameSchema.shape, wrapToolHandler(getUserByName));
+tool("list-users", "List users with pagination and team filtering", listUsersSchema.shape, wrapToolHandler(listUsers));
+tool("get-user", "Get user details by UUID", getUserSchema.shape, wrapToolHandler(getUser));
+tool("get-user-by-name", "Get user by username", getUserByNameSchema.shape, wrapToolHandler(getUserByName));
 
 // --- Teams ---
 
-server.tool("list-teams", "List teams with pagination", listTeamsSchema.shape, wrapToolHandler(listTeams));
-server.tool("get-team", "Get team details by UUID", getTeamSchema.shape, wrapToolHandler(getTeam));
-server.tool("get-team-by-name", "Get team by name", getTeamByNameSchema.shape, wrapToolHandler(getTeamByName));
-server.tool("create-team", "Create a new team", createTeamSchema.shape, wrapToolHandler(createTeam));
-server.tool("update-team", "Update a team using JSON Patch operations", updateTeamSchema.shape, wrapToolHandler(updateTeam));
-server.tool("delete-team", "Delete a team by UUID", deleteTeamSchema.shape, wrapToolHandler(deleteTeam));
+tool("list-teams", "List teams with pagination", listTeamsSchema.shape, wrapToolHandler(listTeams));
+tool("get-team", "Get team details by UUID", getTeamSchema.shape, wrapToolHandler(getTeam));
+tool("get-team-by-name", "Get team by name", getTeamByNameSchema.shape, wrapToolHandler(getTeamByName));
+tool("create-team", "Create a new team", createTeamSchema.shape, wrapToolHandler(createTeam));
+tool("update-team", "Update a team using JSON Patch operations", updateTeamSchema.shape, wrapToolHandler(updateTeam));
+tool("delete-team", "Delete a team by UUID", deleteTeamSchema.shape, wrapToolHandler(deleteTeam));
 
 // --- Roles ---
 
-server.tool("list-roles", "List roles with pagination", listRolesSchema.shape, wrapToolHandler(listRoles));
-server.tool("get-role", "Get role details by name", getRoleSchema.shape, wrapToolHandler(getRole));
+tool("list-roles", "List roles with pagination", listRolesSchema.shape, wrapToolHandler(listRoles));
+tool("get-role", "Get role details by name", getRoleSchema.shape, wrapToolHandler(getRole));
 
 // --- Policies ---
 
-server.tool("list-policies", "List policies with pagination", listPoliciesSchema.shape, wrapToolHandler(listPolicies));
-server.tool("get-policy", "Get policy details by name", getPolicySchema.shape, wrapToolHandler(getPolicy));
+tool("list-policies", "List policies with pagination", listPoliciesSchema.shape, wrapToolHandler(listPolicies));
+tool("get-policy", "Get policy details by name", getPolicySchema.shape, wrapToolHandler(getPolicy));
 
 // --- Data Quality ---
+currentCategory = "quality";
 
-server.tool("list-test-suites", "List data quality test suites", listTestSuitesSchema.shape, wrapToolHandler(listTestSuites));
-server.tool("get-test-suite", "Get test suite details by UUID", getTestSuiteSchema.shape, wrapToolHandler(getTestSuite));
-server.tool("get-test-suite-by-name", "Get test suite by fully qualified name", getTestSuiteByNameSchema.shape, wrapToolHandler(getTestSuiteByName));
-server.tool("list-test-cases", "List data quality test cases with filtering", listTestCasesSchema.shape, wrapToolHandler(listTestCases));
-server.tool("get-test-case", "Get test case details by UUID", getTestCaseSchema.shape, wrapToolHandler(getTestCase));
-server.tool("get-test-case-by-name", "Get test case by fully qualified name", getTestCaseByNameSchema.shape, wrapToolHandler(getTestCaseByName));
-server.tool("list-test-case-results", "List test case execution results", listTestCaseResultsSchema.shape, wrapToolHandler(listTestCaseResults));
+tool("list-test-suites", "List data quality test suites", listTestSuitesSchema.shape, wrapToolHandler(listTestSuites));
+tool("get-test-suite", "Get test suite details by UUID", getTestSuiteSchema.shape, wrapToolHandler(getTestSuite));
+tool("get-test-suite-by-name", "Get test suite by fully qualified name", getTestSuiteByNameSchema.shape, wrapToolHandler(getTestSuiteByName));
+tool("list-test-cases", "List data quality test cases with filtering", listTestCasesSchema.shape, wrapToolHandler(listTestCases));
+tool("get-test-case", "Get test case details by UUID", getTestCaseSchema.shape, wrapToolHandler(getTestCase));
+tool("get-test-case-by-name", "Get test case by fully qualified name", getTestCaseByNameSchema.shape, wrapToolHandler(getTestCaseByName));
+tool("list-test-case-results", "List test case execution results", listTestCaseResultsSchema.shape, wrapToolHandler(listTestCaseResults));
 
 // --- Stored Procedures ---
+currentCategory = "discovery";
 
-server.tool("list-stored-procedures", "List stored procedures with pagination", listStoredProceduresSchema.shape, wrapToolHandler(listStoredProcedures));
-server.tool("get-stored-procedure", "Get stored procedure details by UUID", getStoredProcedureSchema.shape, wrapToolHandler(getStoredProcedure));
-server.tool("get-stored-procedure-by-name", "Get stored procedure by fully qualified name", getStoredProcedureByNameSchema.shape, wrapToolHandler(getStoredProcedureByName));
-server.tool("create-stored-procedure", "Create a new stored procedure", createStoredProcedureSchema.shape, wrapToolHandler(createStoredProcedure));
-server.tool("update-stored-procedure", "Update a stored procedure using JSON Patch operations", updateStoredProcedureSchema.shape, wrapToolHandler(updateStoredProcedure));
-server.tool("delete-stored-procedure", "Delete a stored procedure by UUID", deleteStoredProcedureSchema.shape, wrapToolHandler(deleteStoredProcedure));
+tool("list-stored-procedures", "List stored procedures with pagination", listStoredProceduresSchema.shape, wrapToolHandler(listStoredProcedures));
+tool("get-stored-procedure", "Get stored procedure details by UUID", getStoredProcedureSchema.shape, wrapToolHandler(getStoredProcedure));
+tool("get-stored-procedure-by-name", "Get stored procedure by fully qualified name", getStoredProcedureByNameSchema.shape, wrapToolHandler(getStoredProcedureByName));
+tool("create-stored-procedure", "Create a new stored procedure", createStoredProcedureSchema.shape, wrapToolHandler(createStoredProcedure));
+tool("update-stored-procedure", "Update a stored procedure using JSON Patch operations", updateStoredProcedureSchema.shape, wrapToolHandler(updateStoredProcedure));
+tool("delete-stored-procedure", "Delete a stored procedure by UUID", deleteStoredProcedureSchema.shape, wrapToolHandler(deleteStoredProcedure));
 
 // --- Queries ---
 
-server.tool("list-queries", "List saved queries with pagination", listQueriesSchema.shape, wrapToolHandler(listQueries));
-server.tool("get-query", "Get query details by UUID", getQuerySchema.shape, wrapToolHandler(getQuery));
-server.tool("create-query", "Save a new SQL query", createQuerySchema.shape, wrapToolHandler(createQuery));
-server.tool("update-query", "Update a saved query using JSON Patch operations", updateQuerySchema.shape, wrapToolHandler(updateQuery));
-server.tool("delete-query", "Delete a saved query by UUID", deleteQuerySchema.shape, wrapToolHandler(deleteQuery));
+tool("list-queries", "List saved queries with pagination", listQueriesSchema.shape, wrapToolHandler(listQueries));
+tool("get-query", "Get query details by UUID", getQuerySchema.shape, wrapToolHandler(getQuery));
+tool("create-query", "Save a new SQL query", createQuerySchema.shape, wrapToolHandler(createQuery));
+tool("update-query", "Update a saved query using JSON Patch operations", updateQuerySchema.shape, wrapToolHandler(updateQuery));
+tool("delete-query", "Delete a saved query by UUID", deleteQuerySchema.shape, wrapToolHandler(deleteQuery));
 
 // --- Events ---
+currentCategory = "events";
 
-server.tool("list-events", "List event subscriptions", listEventsSchema.shape, wrapToolHandler(listEvents));
-server.tool("get-event-subscription", "Get event subscription details by UUID", getEventSubscriptionSchema.shape, wrapToolHandler(getEventSubscription));
-server.tool("get-event-subscription-by-name", "Get event subscription by name", getEventSubscriptionByNameSchema.shape, wrapToolHandler(getEventSubscriptionByName));
+tool("list-events", "List event subscriptions", listEventsSchema.shape, wrapToolHandler(listEvents));
+tool("get-event-subscription", "Get event subscription details by UUID", getEventSubscriptionSchema.shape, wrapToolHandler(getEventSubscription));
+tool("get-event-subscription-by-name", "Get event subscription by name", getEventSubscriptionByNameSchema.shape, wrapToolHandler(getEventSubscriptionByName));
 
 // --- Bots ---
+currentCategory = "admin";
 
-server.tool("list-bots", "List bots with pagination", listBotsSchema.shape, wrapToolHandler(listBots));
-server.tool("get-bot", "Get bot details by UUID", getBotSchema.shape, wrapToolHandler(getBot));
-server.tool("get-bot-by-name", "Get bot by name", getBotByNameSchema.shape, wrapToolHandler(getBotByName));
+tool("list-bots", "List bots with pagination", listBotsSchema.shape, wrapToolHandler(listBots));
+tool("get-bot", "Get bot details by UUID", getBotSchema.shape, wrapToolHandler(getBot));
+tool("get-bot-by-name", "Get bot by name", getBotByNameSchema.shape, wrapToolHandler(getBotByName));
 
 // --- Sample Data ---
+currentCategory = "quality";
 
-server.tool("get-table-sample-data", "Get sample data rows for a table by UUID (use this instead of querying BigQuery directly)", getTableSampleDataSchema.shape, wrapToolHandler(getTableSampleData));
-server.tool("get-table-sample-data-by-name", "Get sample data rows for a table by fully qualified name", getTableSampleDataByNameSchema.shape, wrapToolHandler(getTableSampleDataByName));
-server.tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", getTopicSampleDataSchema.shape, wrapToolHandler(getTopicSampleData));
-server.tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
-server.tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));
-server.tool("get-container-sample-data-by-name", "Get sample data for a storage container by fully qualified name", getContainerSampleDataByNameSchema.shape, wrapToolHandler(getContainerSampleDataByName));
+tool("get-table-sample-data", "Get sample data rows for a table by UUID (use this instead of querying BigQuery directly)", getTableSampleDataSchema.shape, wrapToolHandler(getTableSampleData));
+tool("get-table-sample-data-by-name", "Get sample data rows for a table by fully qualified name", getTableSampleDataByNameSchema.shape, wrapToolHandler(getTableSampleDataByName));
+tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", getTopicSampleDataSchema.shape, wrapToolHandler(getTopicSampleData));
+tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
+tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));
+tool("get-container-sample-data-by-name", "Get sample data for a storage container by fully qualified name", getContainerSampleDataByNameSchema.shape, wrapToolHandler(getContainerSampleDataByName));
+
+// --- Meta tools (always enabled) ---
+currentCategory = "meta";
+
+tool("search-tools",
+  "Discover available tools by natural language query. Returns matching tool names + descriptions across all categories. Use this to navigate the 154-tool surface efficiently — call this first, then call the specific tool you need.",
+  searchToolsSchema.shape, wrapToolHandler(searchTools));
 
 // Start server
 async function main() {

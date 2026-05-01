@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
+import { applyExtractFields, extractFieldsDescription } from "./extract-fields.js";
 
 // --- search-metadata ---
 
@@ -22,10 +23,11 @@ export const searchMetadataSchema = z.object({
   sortField: z.string().optional().describe("Field to sort by (e.g. 'name.keyword', 'updatedAt')"),
   sortOrder: z.enum(["asc", "desc"]).optional().describe("Sort order"),
   includeSourceFields: z.string().optional().describe("Comma-separated source fields to include in response"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function searchMetadata(params: z.infer<typeof searchMetadataSchema>) {
-  return omClient.get("/search/query", {
+  const data = await omClient.get("/search/query", {
     q: params.q,
     index: params.index,
     from: params.from,
@@ -37,6 +39,7 @@ export async function searchMetadata(params: z.infer<typeof searchMetadataSchema
     sort_order: params.sortOrder,
     include_source_fields: params.includeSourceFields,
   });
+  return applyExtractFields(data, params.extractFields);
 }
 
 // --- suggest-metadata ---

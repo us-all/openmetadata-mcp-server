@@ -1,6 +1,8 @@
 # OpenMetadata MCP Server
 
-MCP server for [OpenMetadata](https://open-metadata.org/) — **154 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+MCP server for [OpenMetadata](https://open-metadata.org/) — **155 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+
+**Token-efficient by design** — `extractFields` response projection, `OM_TOOLS`/`OM_DISABLE` category toggles, and a `search-tools` meta-tool let you keep LLM context costs low across the 155-tool surface.
 
 ## When to use this vs OpenMetadata's embedded MCP
 
@@ -71,8 +73,50 @@ docker run --rm -i \
 | `OPENMETADATA_HOST` | Yes | OpenMetadata server URL (e.g. `http://localhost:8585`) |
 | `OPENMETADATA_TOKEN` | Yes | JWT or Bot token for authentication |
 | `OPENMETADATA_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
+| `OM_TOOLS` | No | Comma-separated allowlist of tool categories to load (e.g. `core,governance,quality`). When set, **only** these load — biggest token saver. Categories: `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`. |
+| `OM_DISABLE` | No | Comma-separated denylist (e.g. `events,admin`). Ignored when `OM_TOOLS` is set. |
 
-## Tools (154)
+## Token Efficiency
+
+With 155 tools, naive setup can load 30–50K tokens of tool schema into LLM context. Three patterns mitigate this:
+
+### 1. Category toggles (biggest win)
+
+```bash
+# Only data exploration tools
+OM_TOOLS=search,core,discovery,quality
+
+# Or exclude write/admin paths
+OM_DISABLE=admin,events,services
+```
+
+Use `search-tools` (always enabled) to discover which tools exist regardless of what's loaded — call it first to find the right tool, then re-launch with broader categories if needed.
+
+### 2. `extractFields` response projection
+
+Available on `search-metadata`, `list-tables`, `get-table`, `get-table-by-name`. Comma-separated dotted paths with `*` wildcard:
+
+```jsonc
+// Without: 8KB JSON with 50+ fields per column
+get-table { "id": "..." }
+
+// With: ~200 bytes, just what you need
+get-table { "id": "...", "extractFields": "name,description,columns.*.name,columns.*.dataType" }
+```
+
+### 3. `search-tools` meta-tool
+
+Don't memorize 155 tool names. Discover by query:
+
+```
+search-tools { "query": "lineage" }
+→ get-lineage, get-lineage-by-name, add-lineage, delete-lineage
+```
+
+## Tools (155)
+
+### Meta (1)
+`search-tools` — discover tools by natural-language query (always enabled)
 
 ### Search (3)
 `search-metadata` `suggest-metadata` `semantic-search`

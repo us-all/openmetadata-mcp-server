@@ -1,47 +1,55 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
+import { applyExtractFields, extractFieldsDescription } from "./extract-fields.js";
 
 // --- list-tables ---
 
 export const listTablesSchema = z.object({
-  fields: z.string().optional().describe("Comma-separated fields to include (e.g. 'columns,owners,tags,followers,joins,tableConstraints')"),
+  fields: z.string().optional().describe("OpenMetadata fields to include (e.g. 'columns,owners,tags,followers,joins,tableConstraints')"),
   limit: z.coerce.number().optional().default(10).describe("Number of results per page"),
   before: z.string().optional().describe("Cursor for backward pagination"),
   after: z.string().optional().describe("Cursor for forward pagination"),
   database: z.string().optional().describe("Filter by database FQN"),
   databaseSchema: z.string().optional().describe("Filter by database schema FQN"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted").describe("Include deleted entities"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function listTables(params: z.infer<typeof listTablesSchema>) {
-  return omClient.get("/tables", params);
+  const { extractFields, ...query } = params;
+  const data = await omClient.get("/tables", query);
+  return applyExtractFields(data, extractFields);
 }
 
 // --- get-table ---
 
 export const getTableSchema = z.object({
   id: z.string().describe("Table UUID"),
-  fields: z.string().optional().describe("Comma-separated fields to include"),
+  fields: z.string().optional().describe("OpenMetadata fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function getTable(params: z.infer<typeof getTableSchema>) {
-  const { id, ...query } = params;
-  return omClient.get(`/tables/${id}`, query);
+  const { id, extractFields, ...query } = params;
+  const data = await omClient.get(`/tables/${id}`, query);
+  return applyExtractFields(data, extractFields);
 }
 
 // --- get-table-by-name ---
 
 export const getTableByNameSchema = z.object({
   fqn: z.string().describe("Fully qualified name (e.g. 'service.database.schema.tableName')"),
-  fields: z.string().optional().describe("Comma-separated fields to include"),
+  fields: z.string().optional().describe("OpenMetadata fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function getTableByName(params: z.infer<typeof getTableByNameSchema>) {
-  const { fqn, ...query } = params;
-  return omClient.get(`/tables/name/${encodeURIComponent(fqn)}`, query);
+  const { fqn, extractFields, ...query } = params;
+  const data = await omClient.get(`/tables/name/${encodeURIComponent(fqn)}`, query);
+  return applyExtractFields(data, extractFields);
 }
 
 // --- create-table ---
