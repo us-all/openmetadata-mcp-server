@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -33,6 +33,11 @@
     "node": ">=18.0.0"
   },
   "packageManager": "pnpm@10.30.2",
+  "pnpm": {
+    "overrides": {
+      "hono": ">=4.12.14"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/us-all/openmetadata-mcp-server"
