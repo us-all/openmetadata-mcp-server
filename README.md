@@ -1,6 +1,20 @@
 # OpenMetadata MCP Server
 
-MCP server for [OpenMetadata](https://open-metadata.org/) — 153 tools covering metadata management, data lineage, search, data quality, and more. Read-only by default.
+MCP server for [OpenMetadata](https://open-metadata.org/) — **154 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+
+## When to use this vs OpenMetadata's embedded MCP
+
+OpenMetadata 1.12+ ships with an embedded MCP server. They are **complementary**:
+
+| | OM 1.12 embedded MCP | `@us-all/openmetadata-mcp` (this) |
+|--|----------------------|-----------------------------------|
+| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **154** (full CRUD across all entity types) |
+| Auth | OAuth2 / PAT, inherits OM Authorization Engine (RBAC) | JWT bot token + `OPENMETADATA_ALLOW_WRITE` gate |
+| Deployment | Embedded in OM server (marketplace install) | Standalone npm / Docker / npx |
+| OM version | 1.12+ only | 1.x compatible |
+| Best for | RBAC-aware AI agents, SSO orgs, governance flows | Bulk CRUD, automation, sample-data inspection, older OM clusters |
+
+Use the embedded MCP when you need RBAC-aware governance with SSO. Use this server for bulk metadata operations, full entity CRUD parity, and OM clusters older than 1.12.
 
 ## Quick Start
 
@@ -58,10 +72,10 @@ docker run --rm -i \
 | `OPENMETADATA_TOKEN` | Yes | JWT or Bot token for authentication |
 | `OPENMETADATA_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
 
-## Tools (153)
+## Tools (154)
 
-### Search (2)
-`search-metadata` `suggest-metadata`
+### Search (3)
+`search-metadata` `suggest-metadata` `semantic-search`
 
 ### Tables (6)
 `list-tables` `get-table` `get-table-by-name` `create-table` `update-table` `delete-table`

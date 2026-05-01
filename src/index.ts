@@ -123,6 +123,7 @@ import {
   getContainerSampleDataSchema, getContainerSampleData,
   getContainerSampleDataByNameSchema, getContainerSampleDataByName,
 } from "./tools/sample-data.js";
+import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
 
 validateConfig();
 
@@ -135,6 +136,7 @@ const server = new McpServer({
 
 server.tool("search-metadata", "Search OpenMetadata entities (tables, topics, dashboards, pipelines, glossary terms, etc.) by keyword", searchMetadataSchema.shape, wrapToolHandler(searchMetadata));
 server.tool("suggest-metadata", "Get autocomplete suggestions for OpenMetadata entity names", suggestMetadataSchema.shape, wrapToolHandler(suggestMetadata));
+server.tool("semantic-search", "Natural-language semantic search over OpenMetadata entities using vector embeddings (requires OM 1.12+ with semantic search enabled)", semanticSearchSchema.shape, wrapToolHandler(semanticSearch));
 
 // --- Tables ---
 
