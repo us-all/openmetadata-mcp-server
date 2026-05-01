@@ -125,6 +125,7 @@ import {
 } from "./tools/sample-data.js";
 import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
+import { registerResources } from "./resources.js";
 
 validateConfig();
 
@@ -415,6 +416,9 @@ currentCategory = "meta";
 tool("search-tools",
   "Discover available tools by natural language query. Returns matching tool names + descriptions across all categories. Use this to navigate the 154-tool surface efficiently — call this first, then call the specific tool you need.",
   searchToolsSchema.shape, wrapToolHandler(searchTools));
+
+// --- MCP Resources (om:// URI scheme) ---
+registerResources(server);
 
 // Start server
 async function main() {
