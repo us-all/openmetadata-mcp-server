@@ -124,6 +124,7 @@ import {
   getContainerSampleDataByNameSchema, getContainerSampleDataByName,
 } from "./tools/sample-data.js";
 import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
+import { getTableSummarySchema, getTableSummary } from "./tools/aggregations.js";
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 import { registerResources } from "./resources.js";
 
@@ -409,6 +410,13 @@ tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", 
 tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
 tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));
 tool("get-container-sample-data-by-name", "Get sample data for a storage container by fully qualified name", getContainerSampleDataByNameSchema.shape, wrapToolHandler(getContainerSampleDataByName));
+
+// --- Aggregation tools (round-trip elimination) ---
+currentCategory = "core";
+
+tool("get-table-summary",
+  "Aggregated table view: entity + lineage + (optional) sample data + (optional) DQ test cases in a single call. Replaces 3-4 round-trips of get-table-by-name + get-lineage + get-sample-data + list-test-cases.",
+  getTableSummarySchema.shape, wrapToolHandler(getTableSummary));
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";
