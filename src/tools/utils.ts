@@ -1,5 +1,6 @@
 import { config } from "../config.js";
 import { OpenMetadataError } from "../client.js";
+import { applyExtractFields } from "./extract-fields.js";
 
 const SENSITIVE_PATTERNS = [
   /OPENMETADATA_TOKEN/i,
@@ -35,8 +36,11 @@ export function wrapToolHandler<T>(fn: (params: T) => Promise<unknown>) {
   return async (params: T) => {
     try {
       const result = await fn(params);
+      // Auto-apply extractFields if the tool's schema declared it
+      const expr = (params as Record<string, unknown> | undefined)?.extractFields;
+      const projected = typeof expr === "string" ? applyExtractFields(result, expr) : result;
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text" as const, text: JSON.stringify(projected, null, 2) }],
       };
     } catch (error) {
       if (error instanceof WriteBlockedError) {

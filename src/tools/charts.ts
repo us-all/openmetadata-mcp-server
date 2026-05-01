@@ -1,6 +1,9 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
+import { extractFieldsDescription } from "./extract-fields.js";
+
+const ef = z.string().optional().describe(extractFieldsDescription);
 
 // --- list-charts ---
 
@@ -11,6 +14,7 @@ export const listChartsSchema = z.object({
   after: z.string().optional().describe("Cursor for forward pagination"),
   service: z.string().optional().describe("Filter by service FQN"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted").describe("Include deleted entities"),
+  extractFields: ef,
 });
 
 export async function listCharts(params: z.infer<typeof listChartsSchema>) {
@@ -23,6 +27,7 @@ export const getChartSchema = z.object({
   id: z.string().describe("Chart UUID"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: ef,
 });
 
 export async function getChart(params: z.infer<typeof getChartSchema>) {
@@ -36,6 +41,7 @@ export const getChartByNameSchema = z.object({
   fqn: z.string().describe("Fully qualified name (e.g. 'service.chartName')"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: ef,
 });
 
 export async function getChartByName(params: z.infer<typeof getChartByNameSchema>) {

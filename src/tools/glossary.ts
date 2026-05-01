@@ -1,6 +1,9 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
+import { extractFieldsDescription } from "./extract-fields.js";
+
+const ef = z.string().optional().describe(extractFieldsDescription);
 
 // --- Glossaries ---
 
@@ -10,6 +13,7 @@ export const listGlossariesSchema = z.object({
   before: z.string().optional(),
   after: z.string().optional(),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted"),
+  extractFields: ef,
 });
 
 export async function listGlossaries(params: z.infer<typeof listGlossariesSchema>) {
@@ -19,6 +23,7 @@ export async function listGlossaries(params: z.infer<typeof listGlossariesSchema
 export const getGlossarySchema = z.object({
   id: z.string().describe("Glossary UUID"),
   fields: z.string().optional(),
+  extractFields: ef,
 });
 
 export async function getGlossary(params: z.infer<typeof getGlossarySchema>) {
@@ -29,6 +34,7 @@ export async function getGlossary(params: z.infer<typeof getGlossarySchema>) {
 export const getGlossaryByNameSchema = z.object({
   fqn: z.string().describe("Glossary name"),
   fields: z.string().optional(),
+  extractFields: ef,
 });
 
 export async function getGlossaryByName(params: z.infer<typeof getGlossaryByNameSchema>) {
@@ -85,6 +91,7 @@ export const listGlossaryTermsSchema = z.object({
   glossary: z.string().optional().describe("Filter by glossary name"),
   parent: z.string().optional().describe("Filter by parent glossary term FQN"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted"),
+  extractFields: ef,
 });
 
 export async function listGlossaryTerms(params: z.infer<typeof listGlossaryTermsSchema>) {
@@ -94,6 +101,7 @@ export async function listGlossaryTerms(params: z.infer<typeof listGlossaryTerms
 export const getGlossaryTermSchema = z.object({
   id: z.string().describe("Glossary term UUID"),
   fields: z.string().optional(),
+  extractFields: ef,
 });
 
 export async function getGlossaryTerm(params: z.infer<typeof getGlossaryTermSchema>) {
@@ -104,6 +112,7 @@ export async function getGlossaryTerm(params: z.infer<typeof getGlossaryTermSche
 export const getGlossaryTermByNameSchema = z.object({
   fqn: z.string().describe("Glossary term FQN (e.g. 'glossaryName.termName')"),
   fields: z.string().optional(),
+  extractFields: ef,
 });
 
 export async function getGlossaryTermByName(params: z.infer<typeof getGlossaryTermByNameSchema>) {

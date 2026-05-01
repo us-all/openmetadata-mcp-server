@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
+import { extractFieldsDescription } from "./extract-fields.js";
 
 // --- list-dashboards ---
 
@@ -11,6 +12,7 @@ export const listDashboardsSchema = z.object({
   after: z.string().optional().describe("Cursor for forward pagination"),
   service: z.string().optional().describe("Filter by service FQN"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted").describe("Include deleted entities"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function listDashboards(params: z.infer<typeof listDashboardsSchema>) {
@@ -23,6 +25,7 @@ export const getDashboardSchema = z.object({
   id: z.string().describe("Dashboard UUID"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function getDashboard(params: z.infer<typeof getDashboardSchema>) {
@@ -36,6 +39,7 @@ export const getDashboardByNameSchema = z.object({
   fqn: z.string().describe("Fully qualified name (e.g. 'service.dashboardName')"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function getDashboardByName(params: z.infer<typeof getDashboardByNameSchema>) {

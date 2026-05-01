@@ -1,6 +1,9 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
+import { extractFieldsDescription } from "./extract-fields.js";
+
+const ef = z.string().optional().describe(extractFieldsDescription);
 
 // --- list-ml-models ---
 
@@ -11,6 +14,7 @@ export const listMlModelsSchema = z.object({
   after: z.string().optional().describe("Cursor for forward pagination"),
   service: z.string().optional().describe("Filter by service FQN"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted").describe("Include deleted entities"),
+  extractFields: ef,
 });
 
 export async function listMlModels(params: z.infer<typeof listMlModelsSchema>) {
@@ -23,6 +27,7 @@ export const getMlModelSchema = z.object({
   id: z.string().describe("ML Model UUID"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: ef,
 });
 
 export async function getMlModel(params: z.infer<typeof getMlModelSchema>) {
@@ -36,6 +41,7 @@ export const getMlModelByNameSchema = z.object({
   fqn: z.string().describe("Fully qualified name (e.g. 'service.mlModelName')"),
   fields: z.string().optional().describe("Comma-separated fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
+  extractFields: ef,
 });
 
 export async function getMlModelByName(params: z.infer<typeof getMlModelByNameSchema>) {
