@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -17,7 +17,9 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "pretoken-stats": "pnpm run build",
+    "token-stats": "node scripts/measure-tokens.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
