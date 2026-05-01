@@ -99,4 +99,58 @@ export function registerResources(server: McpServer): void {
       return asJson(uri.toString(), data);
     },
   );
+
+  // Dashboard by FQN: om://dashboard/{fqn}
+  server.registerResource(
+    "dashboard",
+    new ResourceTemplate("om://dashboard/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata Dashboard",
+      description: "Dashboard entity by FQN with charts/owners/tags",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/dashboards/name/${encodeURIComponent(fqn)}`, {
+        fields: "charts,owners,tags,description,domains",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  // Pipeline by FQN: om://pipeline/{fqn}
+  server.registerResource(
+    "pipeline",
+    new ResourceTemplate("om://pipeline/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata Pipeline",
+      description: "Pipeline entity by FQN with tasks/owners/tags",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/pipelines/name/${encodeURIComponent(fqn)}`, {
+        fields: "tasks,owners,tags,description,domains",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  // Schema by FQN: om://schema/{fqn}
+  server.registerResource(
+    "schema",
+    new ResourceTemplate("om://schema/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata Database Schema",
+      description: "Database schema entity by FQN",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/databaseSchemas/name/${encodeURIComponent(fqn)}`, {
+        fields: "owners,tags,description,domains",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
 }
