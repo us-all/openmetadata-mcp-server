@@ -1,6 +1,10 @@
 # OpenMetadata MCP Server
 
-MCP server for [OpenMetadata](https://open-metadata.org/) — **155 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+[![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md)
+
+MCP server for [OpenMetadata](https://open-metadata.org/) — **156 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+
+> Authored to the [@us-all MCP Standard](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md) — token-efficient by design.
 
 **Token-efficient by design** — `extractFields` response projection, `OM_TOOLS`/`OM_DISABLE` category toggles, and a `search-tools` meta-tool let you keep LLM context costs low across the 155-tool surface.
 
