@@ -78,7 +78,17 @@ docker run --rm -i \
 
 ## Token Efficiency
 
-With 155 tools, naive setup can load 30–50K tokens of tool schema into LLM context. Three patterns mitigate this:
+With 155 tools, naive setup loads ~24K tokens of tool schema into LLM context before any conversation begins. Three patterns mitigate this.
+
+**Measured impact** (from `tools/list` JSON length, ~4 chars/token):
+
+| Scenario | Tools loaded | Schema tokens | vs default |
+|----------|--------------|---------------|-----------|
+| default (all categories) | 155 | **24,000** | — |
+| typical (`OM_TOOLS=search,core,governance,quality,discovery`) | 120 | 19,500 | −19% |
+| narrow (`OM_TOOLS=search,core`) | 26 | **4,600** | **−81%** |
+
+`extractFields` response projection adds another ~90% reduction on individual tool responses (e.g. `get-table` 8KB → 200B with `extractFields: "name,columns.*.name,columns.*.dataType"`).
 
 ### 1. Category toggles (biggest win)
 
@@ -94,7 +104,7 @@ Use `search-tools` (always enabled) to discover which tools exist regardless of 
 
 ### 2. `extractFields` response projection
 
-Available on `search-metadata`, `list-tables`, `get-table`, `get-table-by-name`. Comma-separated dotted paths with `*` wildcard:
+Available on 28 read tools (search, list/get for tables/dashboards/pipelines/charts/topics/mlmodels/containers/glossaries/glossary-terms). Comma-separated dotted paths with `*` wildcard:
 
 ```jsonc
 // Without: 8KB JSON with 50+ fields per column
