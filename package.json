@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@us-all/mcp-toolkit": "^0.1.0",
+    "@us-all/mcp-toolkit": "^0.2.0",
     "dotenv": "^17.3.1",
     "zod": "^4.3.6"
   },
