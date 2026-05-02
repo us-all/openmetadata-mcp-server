@@ -76,9 +76,10 @@ pnpm token-stats        # tools/list 토큰 측정
 - **JSON Patch 업데이트**: PATCH 요청 시 `application/json-patch+json` content-type 자동 처리 (client.ts).
 - **민감정보 redaction**: 에러 메시지에서 token/password 패턴 `[REDACTED]`.
 
-## 최근 변경사항 (2026-05-01)
+## 최근 변경사항
 
-- **v1.7.0**: `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~209 lines 절감.
+- **v1.7.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` 본문 제거, `createWrapToolHandler` factory로 위임. `redactionPatterns: [/OPENMETADATA_TOKEN/i]` + `errorExtractors`(WriteBlockedError → passthrough, OpenMetadataError → structured)만 명시. utils.ts 73→43 lines.
+- **v1.7.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~209 lines 절감.
 - **v1.6.2**: 추가 MCP Resources (dashboard, pipeline, schema by FQN).
 - **v1.6.0**: `get-table-summary` 어그리게이션 도구 — table + lineage + sample + DQ 1 call.
 - **v1.5.0**: MCP Resources (om:// URI) — table, glossary-term, lineage, search.
