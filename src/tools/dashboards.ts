@@ -1,7 +1,9 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
-import { extractFieldsDescription } from "./extract-fields.js";
+import { applyExtractFields, extractFieldsDescription } from "./extract-fields.js";
+
+const GET_DASHBOARD_DEFAULT_FIELDS = "id,name,fullyQualifiedName,description,owners,charts,tags";
 
 // --- list-dashboards ---
 
@@ -29,8 +31,9 @@ export const getDashboardSchema = z.object({
 });
 
 export async function getDashboard(params: z.infer<typeof getDashboardSchema>) {
-  const { id, ...query } = params;
-  return omClient.get(`/dashboards/${id}`, query);
+  const { id, extractFields, ...query } = params;
+  const data = await omClient.get(`/dashboards/${id}`, query);
+  return applyExtractFields(data, extractFields ?? GET_DASHBOARD_DEFAULT_FIELDS);
 }
 
 // --- get-dashboard-by-name ---
@@ -43,8 +46,9 @@ export const getDashboardByNameSchema = z.object({
 });
 
 export async function getDashboardByName(params: z.infer<typeof getDashboardByNameSchema>) {
-  const { fqn, ...query } = params;
-  return omClient.get(`/dashboards/name/${encodeURIComponent(fqn)}`, query);
+  const { fqn, extractFields, ...query } = params;
+  const data = await omClient.get(`/dashboards/name/${encodeURIComponent(fqn)}`, query);
+  return applyExtractFields(data, extractFields ?? GET_DASHBOARD_DEFAULT_FIELDS);
 }
 
 // --- create-dashboard ---

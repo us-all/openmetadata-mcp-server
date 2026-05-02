@@ -8,7 +8,7 @@ const ef = z.string().optional().describe(extractFieldsDescription);
 // --- Glossaries ---
 
 export const listGlossariesSchema = z.object({
-  fields: z.string().optional().describe("Comma-separated fields (e.g. 'owners,tags,reviewers,terms')"),
+  fields: z.string().optional().describe("Fields (e.g. 'owners,tags,terms')"),
   limit: z.coerce.number().optional().default(10),
   before: z.string().optional(),
   after: z.string().optional(),
@@ -46,7 +46,7 @@ export const createGlossarySchema = z.object({
   name: z.string().describe("Glossary name"),
   displayName: z.string().optional(),
   description: z.string().describe("Glossary description"),
-  mutuallyExclusive: z.boolean().optional().default(false).describe("Whether terms are mutually exclusive"),
+  mutuallyExclusive: z.boolean().optional().default(false).describe("Terms mutually exclusive"),
   owners: z.array(z.record(z.string(), z.any())).optional(),
   reviewers: z.array(z.record(z.string(), z.any())).optional(),
   tags: z.array(z.record(z.string(), z.any())).optional(),
@@ -84,7 +84,7 @@ export async function deleteGlossary(params: z.infer<typeof deleteGlossarySchema
 // --- Glossary Terms ---
 
 export const listGlossaryTermsSchema = z.object({
-  fields: z.string().optional().describe("Comma-separated fields (e.g. 'owners,tags,relatedTerms,reviewers')"),
+  fields: z.string().optional().describe("Fields (e.g. 'owners,tags,relatedTerms')"),
   limit: z.coerce.number().optional().default(10),
   before: z.string().optional(),
   after: z.string().optional(),
@@ -110,7 +110,7 @@ export async function getGlossaryTerm(params: z.infer<typeof getGlossaryTermSche
 }
 
 export const getGlossaryTermByNameSchema = z.object({
-  fqn: z.string().describe("Glossary term FQN (e.g. 'glossaryName.termName')"),
+  fqn: z.string().describe("Term FQN (e.g. 'glossary.term')"),
   fields: z.string().optional(),
   extractFields: ef,
 });

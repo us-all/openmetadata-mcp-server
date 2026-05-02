@@ -1,5 +1,8 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
+import { applyExtractFields, extractFieldsDescription } from "./extract-fields.js";
+
+const LIST_TEST_CASES_DEFAULT_FIELDS = "data.*.id,data.*.name,data.*.fullyQualifiedName,data.*.testSuite.fullyQualifiedName,data.*.testCaseStatus,data.*.testCaseResult,paging";
 
 // --- list-test-suites ---
 
@@ -51,10 +54,13 @@ export const listTestCasesSchema = z.object({
   entityLink: z.string().optional().describe("Filter by entity link (e.g. '<#E::table::service.db.schema.table>')"),
   testSuiteId: z.string().optional().describe("Filter by test suite UUID"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional().default("non-deleted").describe("Include deleted entities"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
 export async function listTestCases(params: z.infer<typeof listTestCasesSchema>) {
-  return omClient.get("/dataQuality/testCases", params);
+  const { extractFields, ...query } = params;
+  const data = await omClient.get("/dataQuality/testCases", query);
+  return applyExtractFields(data, extractFields ?? LIST_TEST_CASES_DEFAULT_FIELDS);
 }
 
 // --- get-test-case ---

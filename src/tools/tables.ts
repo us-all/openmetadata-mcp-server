@@ -6,7 +6,7 @@ import { applyExtractFields, extractFieldsDescription } from "./extract-fields.j
 // --- list-tables ---
 
 export const listTablesSchema = z.object({
-  fields: z.string().optional().describe("OpenMetadata fields to include (e.g. 'columns,owners,tags,followers,joins,tableConstraints')"),
+  fields: z.string().optional().describe("Fields to include (e.g. 'columns,owners,tags,joins')"),
   limit: z.coerce.number().optional().default(10).describe("Number of results per page"),
   before: z.string().optional().describe("Cursor for backward pagination"),
   after: z.string().optional().describe("Cursor for forward pagination"),
@@ -31,16 +31,18 @@ export const getTableSchema = z.object({
   extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
+const GET_TABLE_DEFAULT_FIELDS = "id,name,fullyQualifiedName,description,columns,owners,tags,database";
+
 export async function getTable(params: z.infer<typeof getTableSchema>) {
   const { id, extractFields, ...query } = params;
   const data = await omClient.get(`/tables/${id}`, query);
-  return applyExtractFields(data, extractFields);
+  return applyExtractFields(data, extractFields ?? GET_TABLE_DEFAULT_FIELDS);
 }
 
 // --- get-table-by-name ---
 
 export const getTableByNameSchema = z.object({
-  fqn: z.string().describe("Fully qualified name (e.g. 'service.database.schema.tableName')"),
+  fqn: z.string().describe("FQN (e.g. 'service.db.schema.table')"),
   fields: z.string().optional().describe("OpenMetadata fields to include"),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
   extractFields: z.string().optional().describe(extractFieldsDescription),
@@ -49,7 +51,7 @@ export const getTableByNameSchema = z.object({
 export async function getTableByName(params: z.infer<typeof getTableByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/tables/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  return applyExtractFields(data, extractFields ?? GET_TABLE_DEFAULT_FIELDS);
 }
 
 // --- create-table ---
@@ -73,7 +75,7 @@ export async function createTable(params: z.infer<typeof createTableSchema>) {
 
 export const updateTableSchema = z.object({
   id: z.string().describe("Table UUID to update"),
-  operations: z.array(z.record(z.string(), z.any())).describe("JSON Patch operations array (e.g. [{op:'add', path:'/description', value:'...'}])"),
+  operations: z.array(z.record(z.string(), z.any())).describe("JSON Patch operations"),
 });
 
 export async function updateTable(params: z.infer<typeof updateTableSchema>) {

@@ -5,7 +5,7 @@ import { applyExtractFields, extractFieldsDescription } from "./extract-fields.j
 // --- search-metadata ---
 
 export const searchMetadataSchema = z.object({
-  q: z.string().describe("Search query string. Example: 'customer_orders'"),
+  q: z.string().describe("Search query"),
   index: z.enum([
     "table_search_index", "topic_search_index", "dashboard_search_index",
     "pipeline_search_index", "mlmodel_search_index", "container_search_index",
@@ -19,10 +19,10 @@ export const searchMetadataSchema = z.object({
   size: z.coerce.number().optional().default(10).describe("Number of results to return (max 100)"),
   deleted: z.boolean().optional().default(false).describe("Include soft-deleted entities"),
   trackTotalHits: z.boolean().optional().default(false).describe("Track exact total hit count"),
-  queryFilter: z.string().optional().describe("Additional ElasticSearch query filter as JSON string"),
-  sortField: z.string().optional().describe("Field to sort by (e.g. 'name.keyword', 'updatedAt')"),
+  queryFilter: z.string().optional().describe("ElasticSearch query filter (JSON)"),
+  sortField: z.string().optional().describe("Sort field (e.g. 'updatedAt')"),
   sortOrder: z.enum(["asc", "desc"]).optional().describe("Sort order"),
-  includeSourceFields: z.string().optional().describe("Comma-separated source fields to include in response"),
+  includeSourceFields: z.string().optional().describe("Source fields to include"),
   extractFields: z.string().optional().describe(extractFieldsDescription),
 });
 
@@ -53,7 +53,7 @@ export const suggestMetadataSchema = z.object({
     "glossary_term_search_index", "tag_search_index", "data_product_search_index",
   ]).optional().describe("Restrict suggestions to a specific entity index"),
   size: z.coerce.number().optional().default(10).describe("Number of suggestions to return"),
-  field: z.string().optional().describe("Field to get suggestions for (e.g. 'name', 'displayName')"),
+  field: z.string().optional().describe("Field for suggestions (e.g. 'name')"),
 });
 
 export async function suggestMetadata(params: z.infer<typeof suggestMetadataSchema>) {
