@@ -13,6 +13,7 @@ export const CATEGORIES = [
   "core",            // tables, databases, schemas, lineage
   "discovery",       // dashboards, pipelines, charts, topics, mlmodels, containers, queries, stored-procedures
   "governance",      // glossary, classifications, tags, domains, dataproducts
+  "entities",        // OM 1.12+ data assets: data contracts, metrics, search indexes, api collections, api endpoints
   "quality",         // data-quality (test suites, test cases), sample-data
   "services",        // database/dashboard/messaging/pipeline/mlmodel/storage services
   "admin",           // users, teams, access (roles + policies), bots

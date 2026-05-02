@@ -14,7 +14,11 @@ import { omClient } from "./client.js";
  *   - om://glossary-term/{fqn}          — glossary term by FQN
  *   - om://lineage/{type}/{fqn}         — lineage edges for an entity
  *   - om://schema/{fqn}                 — schema details
- *   - om://service/{type}/{name}        — service details
+ *   - om://dashboard/{fqn}              — dashboard
+ *   - om://pipeline/{fqn}               — pipeline
+ *   - om://metric/{fqn}                 — metric (OM 1.12+)
+ *   - om://data-contract/{fqn}          — data contract (OM 1.12+)
+ *   - om://api-endpoint/{fqn}           — API endpoint (OM 1.12+)
  */
 
 function asJson(uri: string, data: unknown) {
@@ -149,6 +153,60 @@ export function registerResources(server: McpServer): void {
       const fqn = decodeURIComponent(String(vars.fqn));
       const data = await omClient.get(`/databaseSchemas/name/${encodeURIComponent(fqn)}`, {
         fields: "owners,tags,description,domains",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  // Metric by FQN: om://metric/{fqn}
+  server.registerResource(
+    "metric",
+    new ResourceTemplate("om://metric/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata Metric",
+      description: "Metric entity by FQN (OM 1.12+)",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/metrics/name/${encodeURIComponent(fqn)}`, {
+        fields: "owners,tags,description,domains,relatedMetrics",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  // Data Contract by FQN: om://data-contract/{fqn}
+  server.registerResource(
+    "data-contract",
+    new ResourceTemplate("om://data-contract/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata Data Contract",
+      description: "Data Contract entity by FQN (OM 1.12+)",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/dataContracts/name/${encodeURIComponent(fqn)}`, {
+        fields: "owners,tags,description,domains,entity,schema,semantics,qualityExpectations",
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  // API Endpoint by FQN: om://api-endpoint/{fqn}
+  server.registerResource(
+    "api-endpoint",
+    new ResourceTemplate("om://api-endpoint/{fqn}", { list: undefined }),
+    {
+      title: "OpenMetadata API Endpoint",
+      description: "API Endpoint entity by FQN (OM 1.12+)",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const fqn = decodeURIComponent(String(vars.fqn));
+      const data = await omClient.get(`/apiEndpoints/name/${encodeURIComponent(fqn)}`, {
+        fields: "owners,tags,description,domains,requestSchema,responseSchema,apiCollection",
       });
       return asJson(uri.toString(), data);
     },

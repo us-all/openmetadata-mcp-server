@@ -125,6 +125,13 @@ import {
 } from "./tools/sample-data.js";
 import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
 import { getTableSummarySchema, getTableSummary } from "./tools/aggregations.js";
+import {
+  listDataContractsSchema, listDataContracts, getDataContractByNameSchema, getDataContractByName,
+  listMetricsSchema, listMetrics, getMetricByNameSchema, getMetricByName,
+  listSearchIndexesSchema, listSearchIndexes, getSearchIndexByNameSchema, getSearchIndexByName,
+  listApiCollectionsSchema, listApiCollections, getApiCollectionByNameSchema, getApiCollectionByName,
+  listApiEndpointsSchema, listApiEndpoints, getApiEndpointByNameSchema, getApiEndpointByName,
+} from "./tools/governance-entities.js";
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 import { registerResources } from "./resources.js";
 import { registerPrompts } from "./prompts.js";
@@ -411,6 +418,24 @@ tool("get-topic-sample-data", "Get sample data (messages) for a topic by UUID", 
 tool("get-topic-sample-data-by-name", "Get sample data (messages) for a topic by fully qualified name", getTopicSampleDataByNameSchema.shape, wrapToolHandler(getTopicSampleDataByName));
 tool("get-container-sample-data", "Get sample data for a storage container by UUID", getContainerSampleDataSchema.shape, wrapToolHandler(getContainerSampleData));
 tool("get-container-sample-data-by-name", "Get sample data for a storage container by fully qualified name", getContainerSampleDataByNameSchema.shape, wrapToolHandler(getContainerSampleDataByName));
+
+// --- OM 1.12+ entities (Data Contracts / Metrics / Search Indexes / API Collections / API Endpoints) ---
+currentCategory = "entities";
+
+tool("list-data-contracts", "List Data Contracts (OM 1.12+) with pagination", listDataContractsSchema.shape, wrapToolHandler(listDataContracts));
+tool("get-data-contract-by-name", "Get a Data Contract by fully qualified name (OM 1.12+)", getDataContractByNameSchema.shape, wrapToolHandler(getDataContractByName));
+
+tool("list-metrics", "List business/operational Metrics (OM 1.12+) with pagination", listMetricsSchema.shape, wrapToolHandler(listMetrics));
+tool("get-metric-by-name", "Get a Metric by fully qualified name (OM 1.12+)", getMetricByNameSchema.shape, wrapToolHandler(getMetricByName));
+
+tool("list-search-indexes", "List Search Indexes (e.g. ElasticSearch/OpenSearch) with pagination", listSearchIndexesSchema.shape, wrapToolHandler(listSearchIndexes));
+tool("get-search-index-by-name", "Get a Search Index by fully qualified name", getSearchIndexByNameSchema.shape, wrapToolHandler(getSearchIndexByName));
+
+tool("list-api-collections", "List API Collections (OM 1.12+) with pagination", listApiCollectionsSchema.shape, wrapToolHandler(listApiCollections));
+tool("get-api-collection-by-name", "Get an API Collection by fully qualified name (OM 1.12+)", getApiCollectionByNameSchema.shape, wrapToolHandler(getApiCollectionByName));
+
+tool("list-api-endpoints", "List API Endpoints (OM 1.12+) with pagination", listApiEndpointsSchema.shape, wrapToolHandler(listApiEndpoints));
+tool("get-api-endpoint-by-name", "Get an API Endpoint by fully qualified name (OM 1.12+)", getApiEndpointByNameSchema.shape, wrapToolHandler(getApiEndpointByName));
 
 // --- Aggregation tools (round-trip elimination) ---
 currentCategory = "core";
