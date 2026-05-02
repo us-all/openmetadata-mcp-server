@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",
   "main": "dist/index.js",

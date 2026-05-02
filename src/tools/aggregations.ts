@@ -78,7 +78,8 @@ export async function getTableSummary(params: z.infer<typeof getTableSummarySche
 //
 // Implementation note: most OpenMetadata REST list endpoints (/tables, /dashboards,
 // /pipelines, /topics, /mlmodels) do NOT accept a `domain` query filter directly,
-// so we fall back to /search/query with `domain.fullyQualifiedName:"<fqn>"`.
+// so we fall back to /search/query with `domains.fullyQualifiedName:"<fqn>"`
+// (note: plural — entities carry a `domains` array, not a singular `domain`).
 // /dataProducts list does support a `domain` filter natively. /domains/name/{fqn}
 // is used for the domain config (experts/owners/description).
 
@@ -110,7 +111,7 @@ function tagsSlim(tags: unknown): Array<{ tagFQN?: string }> | undefined {
 
 async function searchByDomain(index: string, fqn: string, limit: number) {
   // Quote fqn so dots/spaces are matched as one term.
-  const q = `domain.fullyQualifiedName:"${fqn}"`;
+  const q = `domains.fullyQualifiedName:"${fqn}"`;
   return omClient.get<SearchResult>("/search/query", {
     q,
     index,
