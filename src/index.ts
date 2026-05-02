@@ -127,6 +127,7 @@ import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js
 import { getTableSummarySchema, getTableSummary } from "./tools/aggregations.js";
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 import { registerResources } from "./resources.js";
+import { registerPrompts } from "./prompts.js";
 
 validateConfig();
 
@@ -427,6 +428,9 @@ tool("search-tools",
 
 // --- MCP Resources (om:// URI scheme) ---
 registerResources(server);
+
+// --- MCP Prompts (workflow templates) ---
+registerPrompts(server);
 
 // Start server
 async function main() {
