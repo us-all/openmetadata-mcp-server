@@ -124,7 +124,7 @@ import {
   getContainerSampleDataByNameSchema, getContainerSampleDataByName,
 } from "./tools/sample-data.js";
 import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js";
-import { getTableSummarySchema, getTableSummary } from "./tools/aggregations.js";
+import { getTableSummarySchema, getTableSummary, getDomainSummarySchema, getDomainSummary } from "./tools/aggregations.js";
 import {
   listDataContractsSchema, listDataContracts, getDataContractByNameSchema, getDataContractByName,
   listMetricsSchema, listMetrics, getMetricByNameSchema, getMetricByName,
@@ -443,6 +443,10 @@ currentCategory = "core";
 tool("get-table-summary",
   "Aggregated table view: entity + lineage + (optional) sample data + (optional) DQ test cases in a single call. Replaces 3-4 round-trips of get-table-by-name + get-lineage + get-sample-data + list-test-cases.",
   getTableSummarySchema.shape, wrapToolHandler(getTableSummary));
+
+tool("get-domain-summary",
+  "Aggregated Domain scope: domain config (experts/owners/description) + per-entity-type counts and samples (data products, tables, dashboards, pipelines, topics, ml models) in a single call. Replaces 5-7 sequential round-trips. Failures per entity-type are collected in `caveats`.",
+  getDomainSummarySchema.shape, wrapToolHandler(getDomainSummary));
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";
