@@ -17,6 +17,35 @@ import { applyExtractFields, extractFieldsDescription } from "./extract-fields.j
 
 const listIncludeEnum = z.enum(["non-deleted", "deleted", "all"]);
 
+// Default projections drop noise (changeDescription, incrementalChangeDescription,
+// version, updatedBy, href, entityStatus, deleted, _unparsed) when caller didn't
+// pass extractFields. Caller-supplied extractFields takes precedence.
+const COMMON_LIST_FIELDS = "data.*.id,data.*.name,data.*.fullyQualifiedName,data.*.displayName,data.*.description,data.*.owners,data.*.tags,data.*.updatedAt,paging";
+const COMMON_GET_FIELDS = "id,name,fullyQualifiedName,displayName,description,owners,tags,updatedAt";
+
+const DEFAULTS = {
+  dataContract: {
+    list: `${COMMON_LIST_FIELDS},data.*.entity,data.*.status,data.*.semantics,data.*.qualityExpectations`,
+    get:  `${COMMON_GET_FIELDS},entity,status,semantics,schema,qualityExpectations`,
+  },
+  metric: {
+    list: `${COMMON_LIST_FIELDS},data.*.metricExpression,data.*.metricType,data.*.granularity,data.*.unitOfMeasurement`,
+    get:  `${COMMON_GET_FIELDS},metricExpression,metricType,granularity,unitOfMeasurement,relatedMetrics`,
+  },
+  searchIndex: {
+    list: `${COMMON_LIST_FIELDS},data.*.service,data.*.indexType,data.*.searchIndexSettings`,
+    get:  `${COMMON_GET_FIELDS},service,indexType,fields,searchIndexSettings`,
+  },
+  apiCollection: {
+    list: `${COMMON_LIST_FIELDS},data.*.service,data.*.endpointURL`,
+    get:  `${COMMON_GET_FIELDS},service,endpointURL,apiEndpoints`,
+  },
+  apiEndpoint: {
+    list: `${COMMON_LIST_FIELDS},data.*.endpointURL,data.*.requestMethod,data.*.apiCollection`,
+    get:  `${COMMON_GET_FIELDS},apiCollection,endpointURL,requestMethod,requestSchema,responseSchema`,
+  },
+} as const;
+
 // --- Data Contracts --------------------------------------------------------
 
 export const listDataContractsSchema = z.object({
@@ -31,7 +60,8 @@ export const listDataContractsSchema = z.object({
 export async function listDataContracts(params: z.infer<typeof listDataContractsSchema>) {
   const { extractFields, ...query } = params;
   const data = await omClient.get("/dataContracts", query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.dataContract.list);
 }
 
 export const getDataContractByNameSchema = z.object({
@@ -44,7 +74,8 @@ export const getDataContractByNameSchema = z.object({
 export async function getDataContractByName(params: z.infer<typeof getDataContractByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/dataContracts/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.dataContract.get);
 }
 
 // --- Metrics ---------------------------------------------------------------
@@ -61,7 +92,8 @@ export const listMetricsSchema = z.object({
 export async function listMetrics(params: z.infer<typeof listMetricsSchema>) {
   const { extractFields, ...query } = params;
   const data = await omClient.get("/metrics", query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.metric.list);
 }
 
 export const getMetricByNameSchema = z.object({
@@ -74,7 +106,8 @@ export const getMetricByNameSchema = z.object({
 export async function getMetricByName(params: z.infer<typeof getMetricByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/metrics/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.metric.get);
 }
 
 // --- Search Indexes --------------------------------------------------------
@@ -92,7 +125,8 @@ export const listSearchIndexesSchema = z.object({
 export async function listSearchIndexes(params: z.infer<typeof listSearchIndexesSchema>) {
   const { extractFields, ...query } = params;
   const data = await omClient.get("/searchIndexes", query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.searchIndex.list);
 }
 
 export const getSearchIndexByNameSchema = z.object({
@@ -105,7 +139,8 @@ export const getSearchIndexByNameSchema = z.object({
 export async function getSearchIndexByName(params: z.infer<typeof getSearchIndexByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/searchIndexes/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.searchIndex.get);
 }
 
 // --- API Collections -------------------------------------------------------
@@ -123,7 +158,8 @@ export const listApiCollectionsSchema = z.object({
 export async function listApiCollections(params: z.infer<typeof listApiCollectionsSchema>) {
   const { extractFields, ...query } = params;
   const data = await omClient.get("/apiCollections", query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.apiCollection.list);
 }
 
 export const getApiCollectionByNameSchema = z.object({
@@ -136,7 +172,8 @@ export const getApiCollectionByNameSchema = z.object({
 export async function getApiCollectionByName(params: z.infer<typeof getApiCollectionByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/apiCollections/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.apiCollection.get);
 }
 
 // --- API Endpoints ---------------------------------------------------------
@@ -154,7 +191,8 @@ export const listApiEndpointsSchema = z.object({
 export async function listApiEndpoints(params: z.infer<typeof listApiEndpointsSchema>) {
   const { extractFields, ...query } = params;
   const data = await omClient.get("/apiEndpoints", query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.apiEndpoint.list);
 }
 
 export const getApiEndpointByNameSchema = z.object({
@@ -167,5 +205,6 @@ export const getApiEndpointByNameSchema = z.object({
 export async function getApiEndpointByName(params: z.infer<typeof getApiEndpointByNameSchema>) {
   const { fqn, extractFields, ...query } = params;
   const data = await omClient.get(`/apiEndpoints/name/${encodeURIComponent(fqn)}`, query);
-  return applyExtractFields(data, extractFields);
+  if (extractFields) return data;
+  return applyExtractFields(data, DEFAULTS.apiEndpoint.get);
 }
