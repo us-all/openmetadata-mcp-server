@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler } from "./tools/utils.js";
+
+const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+const { version: pkgVersion } = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version: string };
 
 // Tool imports
 import { searchMetadataSchema, searchMetadata, suggestMetadataSchema, suggestMetadata } from "./tools/search.js";
@@ -140,7 +146,7 @@ validateConfig();
 
 const server = new McpServer({
   name: "openmetadata",
-  version: "1.0.0",
+  version: pkgVersion,
 });
 
 // --- Tool registration with category-based filtering (OM_TOOLS / OM_DISABLE) ---
