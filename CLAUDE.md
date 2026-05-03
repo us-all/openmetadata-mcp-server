@@ -78,6 +78,12 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.10.2** (2026-05-03): Wave 5 — OM 1.12+ 5개 entity tools(Data Contract, Metric, Search Index, API Collection, API Endpoint × list+get-by-name = 10 handler)에 default extractFields 적용. changeDescription/incrementalChangeDescription/version/updatedBy/href noise 드롭, entity별 high-signal 필드(metricExpression, endpointURL 등) 보존.
+- **v1.10.1** (2026-05-03): `get-domain-summary` search query가 단수 `domain.fullyQualifiedName`을 사용했으나 OM entity는 복수 `domains` 배열을 반영 → 도메인 매칭 0건이던 문제 수정. 수동 검증으로 발견.
+- **v1.10.0** (2026-05-02): `get-domain-summary` 어그리게이션 — domain + 6 child entity types(/search/query + track_total_hits, /dataProducts native filter) 1 call.
+- **v1.9.0** (2026-05-02): OM 1.12+ entity types — Data Contract / Metric / Search Index / API Collection / API Endpoint. Resources 3개 + 10개 read-only 도구. 새 `entities` 카테고리.
+- **v1.8.0** (2026-05-02): MCP Prompts 4개 — `lineage-impact-analysis`, `data-quality-investigation`, `glossary-term-bootstrap`, `owner-change-propagation`.
+- **v1.7.2** (2026-05-02): Wave 1 — describe trim 12, 의존성 bumps, fat-read 3개에 default extractFields(get-table, get-dashboard, list-test-cases).
 - **v1.7.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` 본문 제거, `createWrapToolHandler` factory로 위임. `redactionPatterns: [/OPENMETADATA_TOKEN/i]` + `errorExtractors`(WriteBlockedError → passthrough, OpenMetadataError → structured)만 명시. utils.ts 73→43 lines.
 - **v1.7.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~209 lines 절감.
 - **v1.6.2**: 추가 MCP Resources (dashboard, pipeline, schema by FQN).
