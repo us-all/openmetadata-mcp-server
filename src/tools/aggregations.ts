@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { aggregate } from "@us-all/mcp-toolkit";
 import { omClient } from "../client.js";
 import { extractFieldsDescription } from "./extract-fields.js";
 
@@ -33,21 +34,24 @@ export async function getTableSummary(params: z.infer<typeof getTableSummarySche
   const fqn = params.fqn;
   const encoded = encodeURIComponent(fqn);
 
-  const [tableResult, lineageResult, sampleResult, testCasesResult] = await Promise.allSettled([
-    omClient.get<{ id: string }>(`/tables/name/${encoded}`, {
-      fields: "columns,owners,tags,description,tableConstraints,joins,domains,dataProducts",
-    }),
-    params.includeLineage
-      ? omClient.get(`/lineage/table/name/${encoded}`, { upstreamDepth: 2, downstreamDepth: 2 })
-      : Promise.resolve(null),
-    Promise.resolve(null), // resolved below using table id
-    Promise.resolve(null),
-  ]);
+  const caveats: string[] = [];
 
-  const table = tableResult.status === "fulfilled" ? tableResult.value : null;
+  const { table, lineage } = await aggregate(
+    {
+      table: () =>
+        omClient.get<{ id: string }>(`/tables/name/${encoded}`, {
+          fields: "columns,owners,tags,description,tableConstraints,joins,domains,dataProducts",
+        }),
+      lineage: params.includeLineage
+        ? () => omClient.get(`/lineage/table/name/${encoded}`, { upstreamDepth: 2, downstreamDepth: 2 })
+        : () => Promise.resolve(null),
+    },
+    caveats,
+  );
+
   const tableId = (table as { id?: string } | null)?.id;
 
-  // sample/testCases need table id
+  // sample/testCases need table id; fetched serially after the table call
   const sample = params.includeSample && tableId
     ? await omClient.get(`/tables/${tableId}/sampleData`).catch(() => ({ error: "sample data unavailable" }))
     : null;
@@ -58,16 +62,17 @@ export async function getTableSummary(params: z.infer<typeof getTableSummarySche
 
   return {
     table,
-    lineage: lineageResult.status === "fulfilled" ? lineageResult.value : null,
+    lineage,
     sampleData: sample,
     testCases,
     summary: {
       columnCount: (table as { columns?: unknown[] } | null)?.columns?.length ?? 0,
       tagCount: (table as { tags?: unknown[] } | null)?.tags?.length ?? 0,
-      hasLineage: !!lineageResult,
+      hasLineage: !!lineage,
       sampleIncluded: !!sample,
       testCasesIncluded: !!testCases,
     },
+    caveats,
   };
 }
 
@@ -127,75 +132,61 @@ export async function getDomainSummary(params: z.infer<typeof getDomainSummarySc
   const limit = params.entityLimit ?? 10;
   const caveats: string[] = [];
 
-  const [
-    domainResult,
-    dataProductsResult,
-    tablesResult,
-    dashboardsResult,
-    pipelinesResult,
-    topicsResult,
-    mlModelsResult,
-  ] = await Promise.allSettled([
-    omClient.get<AnyRecord>(`/domains/name/${encoded}`, {
-      fields: "experts,owners,description,parent,domainType",
-    }),
-    // /dataProducts supports `domain` filter natively
-    omClient.get<{ data?: AnyRecord[]; paging?: { total?: number } }>("/dataProducts", {
-      domain: fqn,
-      limit,
-      fields: "owners,description",
-    }),
-    // search-metadata fallback for the rest
-    searchByDomain("table_search_index", fqn, limit),
-    searchByDomain("dashboard_search_index", fqn, limit),
-    searchByDomain("pipeline_search_index", fqn, limit),
-    searchByDomain("topic_search_index", fqn, limit),
-    searchByDomain("mlmodel_search_index", fqn, limit),
-  ]);
+  const fetched = await aggregate(
+    {
+      domain: () =>
+        omClient.get<AnyRecord>(`/domains/name/${encoded}`, {
+          fields: "experts,owners,description,parent,domainType",
+        }),
+      // /dataProducts supports `domain` filter natively
+      dataProducts: () =>
+        omClient.get<{ data?: AnyRecord[]; paging?: { total?: number } }>("/dataProducts", {
+          domain: fqn,
+          limit,
+          fields: "owners,description",
+        }),
+      // search-metadata fallback for the rest
+      tables: () => searchByDomain("table_search_index", fqn, limit),
+      dashboards: () => searchByDomain("dashboard_search_index", fqn, limit),
+      pipelines: () => searchByDomain("pipeline_search_index", fqn, limit),
+      topics: () => searchByDomain("topic_search_index", fqn, limit),
+      mlModels: () => searchByDomain("mlmodel_search_index", fqn, limit),
+    },
+    caveats,
+  );
 
   // domain
-  let domain: AnyRecord | null = null;
-  if (domainResult.status === "fulfilled") {
-    const d = domainResult.value;
-    domain = {
-      id: d?.id,
-      name: d?.name,
-      fqn: d?.fullyQualifiedName ?? d?.name,
-      description: d?.description,
-      owners: ownerSlim(d?.owners),
-      experts: ownerSlim(d?.experts),
-    };
-  } else {
-    caveats.push(`get-domain-by-name failed: ${(domainResult.reason as Error)?.message ?? String(domainResult.reason)}`);
-  }
+  const d = fetched.domain;
+  const domain = d
+    ? {
+        id: d.id,
+        name: d.name,
+        fqn: d.fullyQualifiedName ?? d.name,
+        description: d.description,
+        owners: ownerSlim(d.owners),
+        experts: ownerSlim(d.experts),
+      }
+    : null;
 
   // data products (native list)
-  let dataProducts: { count: number; samples: AnyRecord[] } = { count: 0, samples: [] };
-  if (dataProductsResult.status === "fulfilled") {
-    const v = dataProductsResult.value;
-    const items = v?.data ?? [];
-    dataProducts = {
-      count: v?.paging?.total ?? items.length,
-      samples: items.slice(0, limit).map((dp) => ({
-        name: dp?.name,
-        fqn: dp?.fullyQualifiedName,
-        description: dp?.description,
-        owners: ownerSlim(dp?.owners),
-      })),
-    };
-  } else {
-    caveats.push(`list-data-products failed: ${(dataProductsResult.reason as Error)?.message ?? String(dataProductsResult.reason)}`);
-  }
+  const dpItems = fetched.dataProducts?.data ?? [];
+  const dataProducts = fetched.dataProducts
+    ? {
+        count: fetched.dataProducts.paging?.total ?? dpItems.length,
+        samples: dpItems.slice(0, limit).map((dp) => ({
+          name: dp?.name,
+          fqn: dp?.fullyQualifiedName,
+          description: dp?.description,
+          owners: ownerSlim(dp?.owners),
+        })),
+      }
+    : { count: 0, samples: [] as AnyRecord[] };
 
-  function projectSearchHits(label: string, settled: PromiseSettledResult<SearchResult>, includeTags = false) {
-    if (settled.status !== "fulfilled") {
-      caveats.push(`${label} failed: ${(settled.reason as Error)?.message ?? String(settled.reason)}`);
-      return { count: 0, samples: [] as AnyRecord[] };
-    }
-    const v = settled.value;
-    const hits = v?.hits?.hits ?? [];
+  function projectSearchHits(value: SearchResult | null, includeTags = false) {
+    if (!value) return { count: 0, samples: [] as AnyRecord[] };
+    const hits = value.hits?.hits ?? [];
     return {
-      count: searchTotal(v),
+      count: searchTotal(value),
       samples: hits.slice(0, limit).map((h) => {
         const s = h._source ?? {};
         const sample: AnyRecord = {
@@ -209,11 +200,11 @@ export async function getDomainSummary(params: z.infer<typeof getDomainSummarySc
     };
   }
 
-  const tables = projectSearchHits("list-tables", tablesResult, true);
-  const dashboards = projectSearchHits("list-dashboards", dashboardsResult);
-  const pipelines = projectSearchHits("list-pipelines", pipelinesResult);
-  const topics = projectSearchHits("list-topics", topicsResult);
-  const mlModels = projectSearchHits("list-ml-models", mlModelsResult);
+  const tables = projectSearchHits(fetched.tables, true);
+  const dashboards = projectSearchHits(fetched.dashboards);
+  const pipelines = projectSearchHits(fetched.pipelines);
+  const topics = projectSearchHits(fetched.topics);
+  const mlModels = projectSearchHits(fetched.mlModels);
 
   return {
     domain,
