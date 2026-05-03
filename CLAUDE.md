@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.10.3** (2026-05-03): `@us-all/mcp-toolkit ^1.0.0` 핀 업데이트. toolkit API freeze (semver 1.x 보장 시작) — 코드 변경 0줄, 9/9 테스트 통과.
 - **v1.10.2** (2026-05-03): Wave 5 — OM 1.12+ 5개 entity tools(Data Contract, Metric, Search Index, API Collection, API Endpoint × list+get-by-name = 10 handler)에 default extractFields 적용. changeDescription/incrementalChangeDescription/version/updatedBy/href noise 드롭, entity별 high-signal 필드(metricExpression, endpointURL 등) 보존.
 - **v1.10.1** (2026-05-03): `get-domain-summary` search query가 단수 `domain.fullyQualifiedName`을 사용했으나 OM entity는 복수 `domains` 배열을 반영 → 도메인 매칭 0건이던 문제 수정. 수동 검증으로 발견.
 - **v1.10.0** (2026-05-02): `get-domain-summary` 어그리게이션 — domain + 6 child entity types(/search/query + track_total_hits, /dataProducts native filter) 1 call.
