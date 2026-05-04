@@ -1,64 +1,77 @@
 # OpenMetadata MCP Server
 
+> **The OpenMetadata MCP that ships full CRUD across every entity type — including OM 1.12+ Data Contracts, Metrics, Search Index, API Collections, and API Endpoints that the embedded MCP doesn't cover yet.**
+>
+> 156 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and the `get-domain-summary` aggregation that pulls a domain + its 6 child entity types in one call.
+
+[![npm](https://img.shields.io/npm/v/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
+[![downloads](https://img.shields.io/npm/dm/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
+[![tools](https://img.shields.io/badge/tools-156-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
-MCP server for [OpenMetadata](https://open-metadata.org/) — **156 tools** covering metadata management, data lineage, search (incl. semantic), data quality, and more. Read-only by default.
+## What it does that others don't
 
-> Authored to the [@us-all MCP Standard](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md) — token-efficient by design.
+- **OM 1.12+ entity coverage** — Data Contracts, Metrics, Search Index, API Collections, API Endpoints (10 read tools). Not in the embedded MCP yet.
+- **Aggregation tools** — `get-domain-summary` returns domain + 6 child entity types (`tables`, `dashboards`, `pipelines`, `mlmodels`, `topics`, `dataProducts`) via `/search/query` with `track_total_hits` in **one call** instead of 7 sequential. `get-table-summary` folds table + lineage + sample-data + DQ similarly.
+- **Semantic search** — `semantic-search` over OM 1.12+ vector index (POST `/search/vector/query`). Useful when keyword search misses synonyms.
+- **MCP Prompts** (4) — `lineage-impact-analysis`, `data-quality-investigation`, `glossary-term-bootstrap`, `owner-change-propagation`. Workflow templates the model invokes directly.
+- **MCP Resources** (7) — `om://table/{fqn}`, `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}`, `om://search/{query}`, `om://dashboard/{fqn}`, `om://pipeline/{fqn}`, `om://schema/{fqn}`.
+- **Token-efficient by design** — `extractFields` projection on 28 read tools (drops `changeDescription`/`version`/`updatedBy`/`href` noise — ~80% size reduction), `OM_TOOLS`/`OM_DISABLE` 9 categories, `search-tools` meta-tool.
 
-**Token-efficient by design** — `extractFields` response projection, `OM_TOOLS`/`OM_DISABLE` category toggles, and a `search-tools` meta-tool let you keep LLM context costs low across the 155-tool surface.
+## Try this — 5 prompts
+
+Connect the server to Claude Desktop or Claude Code, then paste any of these:
+
+1. **Lineage impact** — *"The `payments.transactions` table is being deprecated. List every dashboard, pipeline, and ML model that depends on it (upstream + downstream, depth 3)."*
+2. **Data quality investigation** — *"Show all failing test cases from the last 7 days. Group by table, then by test type, with pass/fail counts."*
+3. **Glossary bootstrap** — *"Create a `payments` glossary with these 8 terms: chargeback, refund, settlement, KYC, AML, transaction, customer-id, payment-method. Link related terms."*
+4. **Owner reassign** — *"User `taehee` is leaving. List every entity (table/dashboard/pipeline/ML model) where they are owner. Then reassign all of them to team `data-platform`."*
+5. **Domain summary** — *"Summarize the `analytics` domain: total tables/dashboards/pipelines/ML models, top 5 by recent updates, and the data products it owns."*
 
 ## When to use this vs OpenMetadata's embedded MCP
 
-OpenMetadata 1.12+ ships with an embedded MCP server. They are **complementary**:
+OpenMetadata 1.12+ ships an embedded MCP. They are **complementary**:
 
 | | OM 1.12 embedded MCP | `@us-all/openmetadata-mcp` (this) |
 |--|----------------------|-----------------------------------|
-| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **154** (full CRUD across all entity types) |
-| Auth | OAuth2 / PAT, inherits OM Authorization Engine (RBAC) | JWT bot token + `OPENMETADATA_ALLOW_WRITE` gate |
+| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **156** (full CRUD across all entity types) |
+| OM 1.12+ entity types (Data Contracts/Metrics/Search Index/API) | partial | ✅ 10 read tools |
+| Aggregation tools | ❌ | ✅ `get-domain-summary`, `get-table-summary` |
+| MCP Prompts | ❌ | ✅ 4 |
+| MCP Resources | ❌ | ✅ 7 |
+| Auth | OAuth2 / PAT, OM Authorization Engine (RBAC) | JWT bot token + write gate |
 | Deployment | Embedded in OM server (marketplace install) | Standalone npm / Docker / npx |
 | OM version | 1.12+ only | 1.x compatible |
-| Best for | RBAC-aware AI agents, SSO orgs, governance flows | Bulk CRUD, automation, sample-data inspection, older OM clusters |
+| Best for | RBAC-aware AI agents, SSO orgs | Bulk CRUD, automation, sample-data, older OM clusters |
 
-Use the embedded MCP when you need RBAC-aware governance with SSO. Use this server for bulk metadata operations, full entity CRUD parity, and OM clusters older than 1.12.
+Use the embedded MCP for RBAC-aware governance with SSO. Use this server for bulk metadata operations, full entity CRUD parity, automation, and OM clusters older than 1.12.
 
-## Quick Start
+## Install
 
-```bash
-# npx (no install)
-npx @us-all/openmetadata-mcp
-
-# or install globally
-npm i -g @us-all/openmetadata-mcp
-openmetadata-mcp
-```
-
-### Claude Code
-
-```bash
-claude mcp add openmetadata \
-  -e OPENMETADATA_HOST=http://your-host:8585 \
-  -e OPENMETADATA_TOKEN=your-jwt-token \
-  -- npx @us-all/openmetadata-mcp
-```
-
-### Claude Desktop / Cursor
-
-Add to your MCP settings JSON:
+### Claude Desktop
 
 ```json
 {
   "mcpServers": {
     "openmetadata": {
       "command": "npx",
-      "args": ["@us-all/openmetadata-mcp"],
+      "args": ["-y", "@us-all/openmetadata-mcp"],
       "env": {
         "OPENMETADATA_HOST": "http://your-host:8585",
-        "OPENMETADATA_TOKEN": "your-jwt-token"
+        "OPENMETADATA_TOKEN": "<jwt-bot-token>"
       }
     }
   }
 }
+```
+
+### Claude Code
+
+```bash
+claude mcp add openmetadata -s user \
+  -e OPENMETADATA_HOST=http://your-host:8585 \
+  -e OPENMETADATA_TOKEN=<jwt-bot-token> \
+  -- npx -y @us-all/openmetadata-mcp
 ```
 
 ### Docker
@@ -66,148 +79,177 @@ Add to your MCP settings JSON:
 ```bash
 docker run --rm -i \
   -e OPENMETADATA_HOST=http://your-host:8585 \
-  -e OPENMETADATA_TOKEN=your-jwt-token \
+  -e OPENMETADATA_TOKEN=<jwt-bot-token> \
   ghcr.io/us-all/openmetadata-mcp-server
 ```
 
-## Environment Variables
+### Build from source
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENMETADATA_HOST` | Yes | OpenMetadata server URL (e.g. `http://localhost:8585`) |
-| `OPENMETADATA_TOKEN` | Yes | JWT or Bot token for authentication |
-| `OPENMETADATA_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
-| `OM_TOOLS` | No | Comma-separated allowlist of tool categories to load (e.g. `core,governance,quality`). When set, **only** these load — biggest token saver. Categories: `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`. |
-| `OM_DISABLE` | No | Comma-separated denylist (e.g. `events,admin`). Ignored when `OM_TOOLS` is set. |
+```bash
+git clone https://github.com/us-all/openmetadata-mcp-server.git
+cd openmetadata-mcp-server && pnpm install && pnpm build
+node dist/index.js
+```
 
-## Token Efficiency
+### Get a token
 
-With 155 tools, naive setup loads ~24K tokens of tool schema into LLM context before any conversation begins. Three patterns mitigate this.
+1. Open OpenMetadata UI → **Settings → Bots**
+2. Create a new bot or use an existing one (`ingestion-bot` works)
+3. Copy the JWT token
 
-**Measured impact** (from `tools/list` JSON length, ~4 chars/token):
+## Configuration
 
-| Scenario | Tools loaded | Schema tokens | vs default |
-|----------|--------------|---------------|-----------|
-| default (all categories) | 155 | **24,000** | — |
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `OPENMETADATA_HOST` | ✅ | — | OpenMetadata server URL (e.g. `http://localhost:8585`) |
+| `OPENMETADATA_TOKEN` | ✅ | — | JWT or Bot token |
+| `OPENMETADATA_ALLOW_WRITE` | ❌ | `false` | Set `true` to enable mutations (create/update/delete) |
+| `OM_TOOLS` | ❌ | — | Comma-sep allowlist of categories. Biggest token saver. |
+| `OM_DISABLE` | ❌ | — | Comma-sep denylist. Ignored when `OM_TOOLS` is set. |
+
+**Categories** (9): `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`, `meta` (always-on).
+
+### Token efficiency
+
+| Scenario | Tools | Schema tokens | vs default |
+|----------|------:|--------------:|-----------:|
+| default (all categories) | 156 | 24,000 | — |
 | typical (`OM_TOOLS=search,core,governance,quality,discovery`) | 120 | 19,500 | −19% |
 | narrow (`OM_TOOLS=search,core`) | 26 | **4,600** | **−81%** |
 
-`extractFields` response projection adds another ~90% reduction on individual tool responses (e.g. `get-table` 8KB → 200B with `extractFields: "name,columns.*.name,columns.*.dataType"`).
-
-### 1. Category toggles (biggest win)
-
-```bash
-# Only data exploration tools
-OM_TOOLS=search,core,discovery,quality
-
-# Or exclude write/admin paths
-OM_DISABLE=admin,events,services
-```
-
-Use `search-tools` (always enabled) to discover which tools exist regardless of what's loaded — call it first to find the right tool, then re-launch with broader categories if needed.
-
-### 2. `extractFields` response projection
-
-Available on 28 read tools (search, list/get for tables/dashboards/pipelines/charts/topics/mlmodels/containers/glossaries/glossary-terms). Comma-separated dotted paths with `*` wildcard:
+`extractFields` adds another ~80–90% reduction on individual responses (e.g. `get-table` 8KB → 200B with `extractFields: "name,columns.*.name,columns.*.dataType"`). Auto-applied across 28 read tools.
 
 ```jsonc
-// Without: 8KB JSON with 50+ fields per column
+// without
 get-table { "id": "..." }
 
-// With: ~200 bytes, just what you need
+// with
 get-table { "id": "...", "extractFields": "name,description,columns.*.name,columns.*.dataType" }
 ```
 
-### 3. `search-tools` meta-tool
+## MCP Prompts (4)
 
-Don't memorize 155 tool names. Discover by query:
+Workflow templates available via MCP `prompts/list`:
 
-```
-search-tools { "query": "lineage" }
-→ get-lineage, get-lineage-by-name, add-lineage, delete-lineage
-```
+- `lineage-impact-analysis` — given an entity, walk upstream + downstream lineage and rank by impact.
+- `data-quality-investigation` — diff DQ test results across two windows; cluster failure modes.
+- `glossary-term-bootstrap` — bulk-create a glossary with N related terms, link automatically.
+- `owner-change-propagation` — find all entities owned by user X, propose batch reassignment.
 
-## Tools (155)
+## MCP Resources
 
-### Meta (1)
-`search-tools` — discover tools by natural-language query (always enabled)
+URI-based read-only access:
+
+`om://table/{fqn}` (table + columns + owners + tags + joins), `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}` (depth 3), `om://search/{query}` (top 10 keyword hits), `om://dashboard/{fqn}`, `om://pipeline/{fqn}` (with tasks), `om://schema/{fqn}`.
+
+## Tools (156)
+
+9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
+
+| Category | Tools |
+|----------|------:|
+| Tables / Databases / Schemas / Lineage | 22 |
+| Services (database/dashboard/messaging/pipeline/ml/storage) | 16 |
+| Glossaries / Terms | 12 |
+| Domains / Data Products | 12 |
+| Classifications / Tags | 10 |
+| Discovery (dashboards / pipelines / charts / topics / containers / ml-models) | 36 |
+| Governance (roles / policies / users / teams / bots) | 13 |
+| Quality (test suites / cases / sample data) | 13 |
+| Stored Procedures / Queries | 11 |
+| OM 1.12+ entities (Data Contract / Metric / Search Index / API Collection / API Endpoint) | 10 |
+| Search (`search-metadata`, `suggest-metadata`, `semantic-search`) | 3 |
+| Aggregations (`get-domain-summary`, `get-table-summary`) | 2 |
+| Meta (`search-tools`) | 1 |
+
+<details>
+<summary>Full tool list</summary>
 
 ### Search (3)
-`search-metadata` `suggest-metadata` `semantic-search`
+`search-metadata`, `suggest-metadata`, `semantic-search`
 
 ### Tables (6)
-`list-tables` `get-table` `get-table-by-name` `create-table` `update-table` `delete-table`
+`list-tables`, `get-table`, `get-table-by-name`, `create-table`, `update-table`, `delete-table`
 
 ### Databases (6)
-`list-databases` `get-database` `get-database-by-name` `create-database` `update-database` `delete-database`
+`list-databases`, `get-database`, `get-database-by-name`, `create-database`, `update-database`, `delete-database`
 
 ### Database Schemas (6)
-`list-schemas` `get-schema` `get-schema-by-name` `create-schema` `update-schema` `delete-schema`
+`list-schemas`, `get-schema`, `get-schema-by-name`, `create-schema`, `update-schema`, `delete-schema`
 
 ### Lineage (4)
-`get-lineage` `get-lineage-by-name` `add-lineage` `delete-lineage`
+`get-lineage`, `get-lineage-by-name`, `add-lineage`, `delete-lineage`
 
 ### Services (16)
-`list-database-services` `get-database-service` `get-database-service-by-name` `create-database-service` `update-database-service` `delete-database-service` `list-dashboard-services` `get-dashboard-service` `list-messaging-services` `get-messaging-service` `list-pipeline-services` `get-pipeline-service` `list-ml-model-services` `get-ml-model-service` `list-storage-services` `get-storage-service`
+6 database-service tools + 2 each for dashboard/messaging/pipeline/ml-model/storage services.
 
 ### Glossaries (12)
-`list-glossaries` `get-glossary` `get-glossary-by-name` `create-glossary` `update-glossary` `delete-glossary` `list-glossary-terms` `get-glossary-term` `get-glossary-term-by-name` `create-glossary-term` `update-glossary-term` `delete-glossary-term`
+6 glossary CRUD + 6 glossary-term CRUD.
 
-### Dashboards (6)
-`list-dashboards` `get-dashboard` `get-dashboard-by-name` `create-dashboard` `update-dashboard` `delete-dashboard`
-
-### Pipelines (6)
-`list-pipelines` `get-pipeline` `get-pipeline-by-name` `create-pipeline` `update-pipeline` `delete-pipeline`
-
-### Topics (6)
-`list-topics` `get-topic` `get-topic-by-name` `create-topic` `update-topic` `delete-topic`
-
-### Charts (6)
-`list-charts` `get-chart` `get-chart-by-name` `create-chart` `update-chart` `delete-chart`
-
-### Containers (6)
-`list-containers` `get-container` `get-container-by-name` `create-container` `update-container` `delete-container`
-
-### ML Models (6)
-`list-ml-models` `get-ml-model` `get-ml-model-by-name` `create-ml-model` `update-ml-model` `delete-ml-model`
+### Dashboards / Pipelines / Topics / Charts / Containers / ML Models (36)
+6 CRUD each, follows `list / get / get-by-name / create / update / delete`.
 
 ### Classifications & Tags (10)
-`list-classifications` `get-classification` `create-classification` `delete-classification` `list-tags` `get-tag` `get-tag-by-name` `create-tag` `update-tag` `delete-tag`
+4 classification + 6 tag CRUD.
 
 ### Domains & Data Products (12)
-`list-domains` `get-domain` `get-domain-by-name` `create-domain` `update-domain` `delete-domain` `list-data-products` `get-data-product` `get-data-product-by-name` `create-data-product` `update-data-product` `delete-data-product`
+6 domain + 6 data-product CRUD.
 
 ### Users & Teams (9)
-`list-users` `get-user` `get-user-by-name` `list-teams` `get-team` `get-team-by-name` `create-team` `update-team` `delete-team`
+3 user reads + 6 team CRUD.
 
 ### Access Control (4)
-`list-roles` `get-role` `list-policies` `get-policy`
+`list-roles`, `get-role`, `list-policies`, `get-policy`
 
 ### Data Quality (7)
-`list-test-suites` `get-test-suite` `get-test-suite-by-name` `list-test-cases` `get-test-case` `get-test-case-by-name` `list-test-case-results`
+`list-test-suites`, `get-test-suite`, `get-test-suite-by-name`, `list-test-cases`, `get-test-case`, `get-test-case-by-name`, `list-test-case-results`
 
 ### Stored Procedures (6)
-`list-stored-procedures` `get-stored-procedure` `get-stored-procedure-by-name` `create-stored-procedure` `update-stored-procedure` `delete-stored-procedure`
+6 CRUD.
 
 ### Queries (5)
-`list-queries` `get-query` `create-query` `update-query` `delete-query`
+`list-queries`, `get-query`, `create-query`, `update-query`, `delete-query`
 
 ### Events (3)
-`list-events` `get-event-subscription` `get-event-subscription-by-name`
+`list-events`, `get-event-subscription`, `get-event-subscription-by-name`
 
 ### Bots (3)
-`list-bots` `get-bot` `get-bot-by-name`
+`list-bots`, `get-bot`, `get-bot-by-name`
 
 ### Sample Data (6, read-only)
-`get-table-sample-data` `get-table-sample-data-by-name` `get-topic-sample-data` `get-topic-sample-data-by-name` `get-container-sample-data` `get-container-sample-data-by-name`
+`get-table-sample-data`, `get-table-sample-data-by-name`, `get-topic-sample-data`, `get-topic-sample-data-by-name`, `get-container-sample-data`, `get-container-sample-data-by-name`
 
-## Getting a Token
+### OM 1.12+ entities (10)
+`list-data-contracts`, `get-data-contract-by-name`, `list-metrics`, `get-metric-by-name`, `list-search-indexes`, `get-search-index-by-name`, `list-api-collections`, `get-api-collection-by-name`, `list-api-endpoints`, `get-api-endpoint-by-name`
 
-1. Open your OpenMetadata UI
-2. Go to **Settings > Bots**
-3. Create a new bot or use an existing one (e.g. `ingestion-bot`)
-4. Copy the JWT token
+### Aggregations
+`get-domain-summary`, `get-table-summary`
+
+### Meta
+`search-tools` — query other tools by keyword; always enabled.
+
+</details>
+
+## Architecture
+
+```
+Claude → MCP stdio → src/index.ts → src/tools/*.ts → OpenMetadataClient (fetch) → OpenMetadata REST
+```
+
+Built on [`@us-all/mcp-toolkit`](https://github.com/us-all/mcp-toolkit):
+- `extractFields` — token-efficient response projections
+- `aggregate(fetchers, caveats)` — fan-out helper for `get-domain-summary` / `get-table-summary`
+- `createWrapToolHandler` — `OPENMETADATA_TOKEN` redaction + `OpenMetadataError` extraction
+- `search-tools` meta-tool
+
+Targets OM 1.x. Validated against real OM backend with the OM 1.12+ entities.
+
+## Tech stack
+
+Node.js 18+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` • zod • dotenv • vitest.
+
+JSON-Patch updates handled automatically (PATCH `application/json-patch+json` content-type).
 
 ## License
 
-MIT
+[MIT](./LICENSE)
