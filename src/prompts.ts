@@ -146,6 +146,88 @@ export function registerPrompts(server: McpServer): void {
   );
 
   server.registerPrompt(
+    "data-contract-bootstrap",
+    {
+      title: "Bootstrap a Data Contract from an existing table (OM 1.12+)",
+      description:
+        "Read-only audit that compiles a draft Data Contract for a table — schema rules from columns, quality rules from existing test cases, owners from entity owners, freshness from ingestion stats. Outputs a ready-to-apply JSON spec; the user creates the contract manually since write tools for Data Contracts are not yet exposed.",
+      argsSchema: {
+        tableFqn: z
+          .string()
+          .describe("Fully qualified name of the table to bootstrap a contract for"),
+        contractName: z
+          .string()
+          .optional()
+          .describe(
+            "Name for the new contract (default: '<tableName>-contract')",
+          ),
+        includeQualityRules: z
+          .string()
+          .optional()
+          .describe("'true' (default) to pull existing test cases as quality rules"),
+        includeSampleData: z
+          .string()
+          .optional()
+          .describe(
+            "'true' (default) to pull sample data and infer NOT NULL / range constraints",
+          ),
+      },
+    },
+    ({ tableFqn, contractName, includeQualityRules, includeSampleData }) => {
+      const cn = contractName ?? `${tableFqn.split(".").pop()}-contract`;
+      const useQuality = includeQualityRules !== "false";
+      const useSample = includeSampleData !== "false";
+      return {
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: [
+                `Bootstrap a Data Contract for table ${tableFqn} (contract name '${cn}').`,
+                "",
+                "Steps:",
+                `1. Call \`get-table-by-name\` with fqn=${JSON.stringify(tableFqn)}, fields='columns,owners,tags,domain,testSuite,changeDescription'. Capture columns (name, dataType, dataLength, constraint, description), owners (id, type, name), domain.fullyQualifiedName, and testSuite (if any).`,
+                `2. Check for an existing contract on this entity: \`list-data-contracts\` with fields='owners,entity', then filter the response in-memory for entries whose \`entity.fullyQualifiedName === ${JSON.stringify(tableFqn)}\`. If one already exists, surface its name + status and stop with a note that bootstrap should not duplicate.`,
+                useQuality
+                  ? "3. Pull quality rules: `list-test-cases` with `entityLink='<#E::table::" + tableFqn + ">'` and `includeAllTests=true`. For each test case capture: testDefinition.name, testDefinition.entityType (TABLE | COLUMN), parameterValues, severity. These map to the contract's `qualityExpectations`."
+                  : "3. Skip quality rules (includeQualityRules=false).",
+                useSample
+                  ? "4. Pull sample data: `get-table-sample-data-by-name` with fqn=" + JSON.stringify(tableFqn) + ", limit=100. Use it to *infer* schema rules (do not promise them as truth):\n   - column has zero nulls in sample → suggest `required: true` (NOT NULL).\n   - numeric column min/max range → suggest `range` quality rule with the observed bounds + 20% padding.\n   - string column distinct values < 20 → suggest `enum` rule with the distinct values.\n   - all rows match a regex (email/url/uuid/iso-date) → suggest `pattern` rule.\n   Mark each inferred rule as **inferred** in the output so the reviewer can tighten them."
+                  : "4. Skip sample-data-driven inference (includeSampleData=false).",
+                "5. Compile the draft contract spec as JSON:",
+                "   ```jsonc",
+                "   {",
+                `     \"name\": ${JSON.stringify(cn)},`,
+                "     \"entity\": { \"type\": \"table\", \"fullyQualifiedName\": " + JSON.stringify(tableFqn) + " },",
+                "     \"owners\": [ /* from step 1 */ ],",
+                "     \"schema\": [",
+                "       /* per column: { name, dataType, required, constraint, description } */",
+                "     ],",
+                "     \"qualityExpectations\": [",
+                "       /* from step 3 (existing tests) and step 4 (inferred rules), tagged with source */",
+                "     ],",
+                "     \"semantics\": [",
+                "       /* glossary term refs from columns[].tags where tagFQN starts with 'Glossary.' */",
+                "     ],",
+                "     \"sla\": { \"freshness\": null, \"completeness\": null }",
+                "   }",
+                "   ```",
+                "6. Final output:",
+                "   - **Existing contract**: name + status if step 2 found one (or 'none').",
+                "   - **Draft spec**: the JSON from step 5 inside a code block.",
+                "   - **Confidence notes**: which fields came from existing tests (high confidence) vs sample-data inference (review before applying).",
+                "   - **Apply hint**: 'Data Contract write tool is not yet exposed in this MCP — copy the JSON above into the OM UI: Settings → Data Contracts → New, or POST to `/api/v1/dataContracts` directly.'",
+                "7. IMPORTANT: do NOT call any `update-*` / `create-*` / `delete-*` tools. This prompt is a read-only audit + drafting workflow.",
+              ].join("\n"),
+            },
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerPrompt(
     "owner-change-propagation",
     {
       title: "Owner change propagation audit",
