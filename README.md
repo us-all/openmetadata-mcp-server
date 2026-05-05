@@ -2,21 +2,23 @@
 
 > **The OpenMetadata MCP that ships full CRUD across every entity type — including OM 1.12+ Data Contracts, Metrics, Search Index, API Collections, and API Endpoints that the embedded MCP doesn't cover yet.**
 >
-> 156 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and the `get-domain-summary` aggregation that pulls a domain + its 6 child entity types in one call.
+> 157 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and aggregations like `lineage-impact` (downstream blast-radius w/ owner notification list) and `get-domain-summary` (domain + 6 child entity types in one call).
 
 [![npm](https://img.shields.io/npm/v/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
-[![tools](https://img.shields.io/badge/tools-156-blue)](#tools)
+[![tools](https://img.shields.io/badge/tools-157-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
 ## What it does that others don't
 
 - **OM 1.12+ entity coverage** — Data Contracts, Metrics, Search Index, API Collections, API Endpoints (10 read tools). Not in the embedded MCP yet.
-- **Aggregation tools** — `get-domain-summary` returns domain + 6 child entity types (`tables`, `dashboards`, `pipelines`, `mlmodels`, `topics`, `dataProducts`) via `/search/query` with `track_total_hits` in **one call** instead of 7 sequential. `get-table-summary` folds table + lineage + sample-data + DQ similarly.
+- **Aggregation tools** — `lineage-impact` answers "what breaks if I change/drop X?" by walking lineage + counting consumers + breaking down by entity type + resolving the owner union for change-mgmt notifications, in one call. `get-domain-summary` returns domain + 6 child entity types via `/search/query` with `track_total_hits` in **one call** instead of 7 sequential. `get-table-summary` folds table + lineage + sample-data + DQ similarly.
 - **Semantic search** — `semantic-search` over OM 1.12+ vector index (POST `/search/vector/query`). Useful when keyword search misses synonyms.
 - **MCP Prompts** (4) — `lineage-impact-analysis`, `data-quality-investigation`, `glossary-term-bootstrap`, `owner-change-propagation`. Workflow templates the model invokes directly.
 - **MCP Resources** (7) — `om://table/{fqn}`, `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}`, `om://search/{query}`, `om://dashboard/{fqn}`, `om://pipeline/{fqn}`, `om://schema/{fqn}`.
 - **Token-efficient by design** — `extractFields` projection on 28 read tools (drops `changeDescription`/`version`/`updatedBy`/`href` noise — ~80% size reduction), `OM_TOOLS`/`OM_DISABLE` 9 categories, `search-tools` meta-tool.
+- **Apps SDK card** — `lineage-impact` renders as a blast-radius card on ChatGPT clients (downstream/upstream counts + type breakdown + top consumers + owners-to-notify) via `_meta["openai/outputTemplate"]`. Claude clients receive the same JSON content.
+- **stdio + Streamable HTTP** — defaults to stdio. Set `MCP_TRANSPORT=http` for ChatGPT Apps SDK or remote clients (Bearer auth via `MCP_HTTP_TOKEN`).
 
 ## Try this — 5 prompts
 
@@ -34,9 +36,9 @@ OpenMetadata 1.12+ ships an embedded MCP. They are **complementary**:
 
 | | OM 1.12 embedded MCP | `@us-all/openmetadata-mcp` (this) |
 |--|----------------------|-----------------------------------|
-| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **156** (full CRUD across all entity types) |
+| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **157** (full CRUD across all entity types) |
 | OM 1.12+ entity types (Data Contracts/Metrics/Search Index/API) | partial | ✅ 10 read tools |
-| Aggregation tools | ❌ | ✅ `get-domain-summary`, `get-table-summary` |
+| Aggregation tools | ❌ | ✅ `lineage-impact`, `get-domain-summary`, `get-table-summary` |
 | MCP Prompts | ❌ | ✅ 4 |
 | MCP Resources | ❌ | ✅ 7 |
 | Auth | OAuth2 / PAT, OM Authorization Engine (RBAC) | JWT bot token + write gate |
@@ -106,8 +108,15 @@ node dist/index.js
 | `OPENMETADATA_ALLOW_WRITE` | ❌ | `false` | Set `true` to enable mutations (create/update/delete) |
 | `OM_TOOLS` | ❌ | — | Comma-sep allowlist of categories. Biggest token saver. |
 | `OM_DISABLE` | ❌ | — | Comma-sep denylist. Ignored when `OM_TOOLS` is set. |
+| `MCP_TRANSPORT` | ❌ | `stdio` | `http` to enable Streamable HTTP transport |
+| `MCP_HTTP_TOKEN` | conditional | — | Bearer token. Required when `MCP_TRANSPORT=http` |
+| `MCP_HTTP_PORT` | ❌ | `3000` | HTTP listen port |
+| `MCP_HTTP_HOST` | ❌ | `127.0.0.1` | HTTP bind host (DNS rebinding protection auto-enabled for localhost) |
+| `MCP_HTTP_SKIP_AUTH` | ❌ | `false` | Skip Bearer auth — e.g. behind a reverse proxy that handles it |
 
 **Categories** (9): `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`, `meta` (always-on).
+
+When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (public liveness).
 
 ### Token efficiency
 
@@ -142,7 +151,7 @@ URI-based read-only access:
 
 `om://table/{fqn}` (table + columns + owners + tags + joins), `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}` (depth 3), `om://search/{query}` (top 10 keyword hits), `om://dashboard/{fqn}`, `om://pipeline/{fqn}` (with tasks), `om://schema/{fqn}`.
 
-## Tools (156)
+## Tools (157)
 
 9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 
@@ -159,7 +168,7 @@ URI-based read-only access:
 | Stored Procedures / Queries | 11 |
 | OM 1.12+ entities (Data Contract / Metric / Search Index / API Collection / API Endpoint) | 10 |
 | Search (`search-metadata`, `suggest-metadata`, `semantic-search`) | 3 |
-| Aggregations (`get-domain-summary`, `get-table-summary`) | 2 |
+| Aggregations (`lineage-impact`, `get-domain-summary`, `get-table-summary`) | 3 |
 | Meta (`search-tools`) | 1 |
 
 <details>
@@ -223,7 +232,7 @@ URI-based read-only access:
 `list-data-contracts`, `get-data-contract-by-name`, `list-metrics`, `get-metric-by-name`, `list-search-indexes`, `get-search-index-by-name`, `list-api-collections`, `get-api-collection-by-name`, `list-api-endpoints`, `get-api-endpoint-by-name`
 
 ### Aggregations
-`get-domain-summary`, `get-table-summary`
+`lineage-impact`, `get-domain-summary`, `get-table-summary`
 
 ### Meta
 `search-tools` — query other tools by keyword; always enabled.
@@ -238,7 +247,7 @@ Claude → MCP stdio → src/index.ts → src/tools/*.ts → OpenMetadataClient 
 
 Built on [`@us-all/mcp-toolkit`](https://github.com/us-all/mcp-toolkit):
 - `extractFields` — token-efficient response projections
-- `aggregate(fetchers, caveats)` — fan-out helper for `get-domain-summary` / `get-table-summary`
+- `aggregate(fetchers, caveats)` — fan-out helper used by `lineage-impact` / `get-domain-summary` / `get-table-summary`
 - `createWrapToolHandler` — `OPENMETADATA_TOKEN` redaction + `OpenMetadataError` extraction
 - `search-tools` meta-tool
 

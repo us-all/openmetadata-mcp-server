@@ -1,5 +1,11 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { omClient } from "./client.js";
+
+const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), "ui");
+const LINEAGE_IMPACT_HTML = readFileSync(join(UI_DIR, "lineage-impact.html"), "utf-8");
 
 /**
  * MCP Resources for hot OpenMetadata entities.
@@ -210,5 +216,29 @@ export function registerResources(server: McpServer): void {
       });
       return asJson(uri.toString(), data);
     },
+  );
+
+  // --- Apps SDK UI templates (ui:// scheme) ---
+  // Rendered by ChatGPT / Apps SDK clients via _meta["openai/outputTemplate"].
+  // Claude clients ignore the metadata and use the tool's text content instead.
+  server.registerResource(
+    "lineage-impact-card",
+    "ui://widget/lineage-impact.html",
+    {
+      title: "Lineage Impact card",
+      description: "Apps SDK UI template rendered with lineage-impact tool output",
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/outputTemplate": "ui://widget/lineage-impact.html",
+        "ui.resourceUri": "ui://widget/lineage-impact.html",
+      },
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.toString(),
+        mimeType: "text/html+skybridge",
+        text: LINEAGE_IMPACT_HTML,
+      }],
+    }),
   );
 }
