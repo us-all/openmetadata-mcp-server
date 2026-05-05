@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.11.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.0` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.11.0** (2026-05-04): MCP Prompt `data-contract-bootstrap` 추가 — OM 1.12+ Data Contract을 기존 table에서 부트스트랩하는 read-only 감사. 컬럼 → schema 룰, 기존 test cases → quality expectations, sample data → NOT NULL/range/enum/pattern inference, owners + domain 자동 매핑. 결과는 적용 가능 JSON spec. write 도구는 아직 미노출이라 user가 OM UI 또는 직접 API로 적용. 가시성 sprint Week 2 P0 — OM 1.12+ 신기능 선점.
 - **v1.10.5** (2026-05-03): `serverInfo.version`이 `"1.0.0"`에 박혀있던 것을 `package.json`에서 런타임 로드. initialize handshake에서 보고하는 server version이 실제 패키지 버전과 일치.
 - **v1.10.4** (2026-05-03): `@us-all/mcp-toolkit ^1.1.0` 채택 + `aggregate()` 헬퍼로 `get-table-summary`(2-fetch part), `get-domain-summary`(7-fetch fan-out) 마이그레이션. `get-table-summary`는 caveats 노출 추가됨. caveats 라벨 텍스트 변경 (예: `get-domain-by-name failed:` → `domain failed:`).
