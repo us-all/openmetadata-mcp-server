@@ -28,7 +28,7 @@ const PROJECT_ROOT = resolve(__dirname, "..");
 const SERVER_BIN = resolve(PROJECT_ROOT, "dist/index.js");
 
 const TIMEOUT_MS = 30_000;
-const EXPECTED_TOOL_COUNT = 168;
+const EXPECTED_TOOL_COUNT = 170;
 const EXPECTED_UI_RESOURCE = "ui://widget/lineage-impact.html";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

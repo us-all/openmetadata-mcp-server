@@ -33,6 +33,7 @@ import {
   addLineageSchema, addLineage, deleteLineageSchema, deleteLineage,
 } from "./tools/lineage.js";
 import { lineageImpactSchema, lineageImpact } from "./tools/lineage-impact.js";
+import { qualityRollupSchema, qualityRollup, runTestSuiteSchema, runTestSuite } from "./tools/quality-rollup.js";
 import {
   listDatabaseServicesSchema, listDatabaseServices, getDatabaseServiceSchema, getDatabaseService,
   getDatabaseServiceByNameSchema, getDatabaseServiceByName,
@@ -477,6 +478,16 @@ async function lineageImpactWithCard(args: Parameters<typeof wrappedLineageImpac
 tool("lineage-impact",
   "Aggregated downstream impact analysis: walks lineage (default 3 levels down, 1 up), counts unique consumers, breaks down by entity type, surfaces highest-fan-out top consumers, and (optionally) resolves the union of owners affected. Answers 'who/what breaks if I change X?' in one call instead of recursive get-lineage walks. Renders an Apps SDK card on ChatGPT clients.",
   lineageImpactSchema.shape, lineageImpactWithCard);
+
+currentCategory = "quality";
+
+tool("quality-rollup",
+  "Aggregated DQ status across a scope (table / test suite / org-wide). Lists test cases under the scope, buckets them by current status (Success/Failed/Aborted/Queued), surfaces the top failing cases (with fqn/result/timestamp), reports passRatePct + most-recent-run timestamp. Replaces the recursive list-test-cases + list-test-case-results walk LLMs do for 'what's broken in <scope>?'. Provide ONE of entityLink / tableFqn / testSuiteId / testSuiteFqn (or none for org-wide).",
+  qualityRollupSchema.shape, wrapToolHandler(qualityRollup));
+
+tool("run-test-suite",
+  "Trigger execution of a Test Suite via its associated ingestion pipeline. Async — returns the trigger ack, results land via the normal pipeline → testCaseResult flow (poll list-test-case-results or quality-rollup). Provide pipelineFqn or pipelineId directly, OR testSuiteFqn (resolved to its first associated pipeline). Write-gated by OPENMETADATA_ALLOW_WRITE.",
+  runTestSuiteSchema.shape, wrapToolHandler(runTestSuite));
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";
