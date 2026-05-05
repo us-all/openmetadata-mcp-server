@@ -2,11 +2,11 @@
 
 > **The OpenMetadata MCP that ships full CRUD across every entity type — including OM 1.12+ Data Contracts, Metrics, Search Index, API Collections, and API Endpoints that the embedded MCP doesn't cover yet.**
 >
-> 157 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and aggregations like `lineage-impact` (downstream blast-radius w/ owner notification list) and `get-domain-summary` (domain + 6 child entity types in one call).
+> 168 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and aggregations like `lineage-impact` (downstream blast-radius w/ owner notification list) and `get-domain-summary` (domain + 6 child entity types in one call).
 
 [![npm](https://img.shields.io/npm/v/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
-[![tools](https://img.shields.io/badge/tools-157-blue)](#tools)
+[![tools](https://img.shields.io/badge/tools-168-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
 ## What it does that others don't
@@ -36,7 +36,7 @@ OpenMetadata 1.12+ ships an embedded MCP. They are **complementary**:
 
 | | OM 1.12 embedded MCP | `@us-all/openmetadata-mcp` (this) |
 |--|----------------------|-----------------------------------|
-| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **157** (full CRUD across all entity types) |
+| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **168** (full CRUD across all entity types) |
 | OM 1.12+ entity types (Data Contracts/Metrics/Search Index/API) | partial | ✅ 10 read tools |
 | Aggregation tools | ❌ | ✅ `lineage-impact`, `get-domain-summary`, `get-table-summary` |
 | MCP Prompts | ❌ | ✅ 4 |
@@ -151,7 +151,7 @@ URI-based read-only access:
 
 `om://table/{fqn}` (table + columns + owners + tags + joins), `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}` (depth 3), `om://search/{query}` (top 10 keyword hits), `om://dashboard/{fqn}`, `om://pipeline/{fqn}` (with tasks), `om://schema/{fqn}`.
 
-## Tools (157)
+## Tools (168)
 
 9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 

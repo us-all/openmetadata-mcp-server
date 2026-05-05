@@ -18,6 +18,8 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "presmoke": "pnpm run build",
+    "smoke": "node scripts/smoke-test.mjs",
     "pretoken-stats": "pnpm run build",
     "token-stats": "node scripts/measure-tokens.mjs"
   },
