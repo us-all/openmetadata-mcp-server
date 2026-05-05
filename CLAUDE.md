@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.13.0** (2026-05-05): 신규 `lineage-impact` 어그리게이션 도구 + Apps SDK UI 카드 — "이 entity 변경하면 뭐가 깨지나?" 분석. 라인지를 깊이 walk(default downstream 3, upstream 1)하면서 unique consumers 카운트, entity type별 breakdown, 최고 fan-out top consumers, 영향받는 owner union(notification 대상). 1 호출로 재귀 get-lineage 대체. 새 카테고리 도구라기보다 기존 `core` 카테고리에 추가. ChatGPT 클라이언트에서 카드 렌더 (downstream/upstream/owners 카운트 + types breakdown + top consumers). Claude 클라이언트는 JSON 응답 그대로.
 - **v1.12.0** (2026-05-05): `startMcpServer` 채택 — toolkit v1.2.0의 런타임 헬퍼로 stdio 부트스트랩을 1줄로 교체. `MCP_TRANSPORT=http`로 Streamable HTTP transport 옵트인 가능 (기본 stdio). Bearer 인증, `/health` 엔드포인트. 기존 stdio 사용자 영향 0.
 - **v1.11.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.0` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.11.0** (2026-05-04): MCP Prompt `data-contract-bootstrap` 추가 — OM 1.12+ Data Contract을 기존 table에서 부트스트랩하는 read-only 감사. 컬럼 → schema 룰, 기존 test cases → quality expectations, sample data → NOT NULL/range/enum/pattern inference, owners + domain 자동 매핑. 결과는 적용 가능 JSON spec. write 도구는 아직 미노출이라 user가 OM UI 또는 직접 API로 적용. 가시성 sprint Week 2 P0 — OM 1.12+ 신기능 선점.

@@ -32,6 +32,7 @@ import {
   getLineageSchema, getLineage, getLineageByNameSchema, getLineageByName,
   addLineageSchema, addLineage, deleteLineageSchema, deleteLineage,
 } from "./tools/lineage.js";
+import { lineageImpactSchema, lineageImpact } from "./tools/lineage-impact.js";
 import {
   listDatabaseServicesSchema, listDatabaseServices, getDatabaseServiceSchema, getDatabaseService,
   getDatabaseServiceByNameSchema, getDatabaseServiceByName,
@@ -453,6 +454,29 @@ tool("get-table-summary",
 tool("get-domain-summary",
   "Aggregated Domain scope: domain config (experts/owners/description) + per-entity-type counts and samples (data products, tables, dashboards, pipelines, topics, ml models) in a single call. Replaces 5-7 sequential round-trips. Failures per entity-type are collected in `caveats`.",
   getDomainSummarySchema.shape, wrapToolHandler(getDomainSummary));
+
+// Card-aware wrapper: see datadog `slo-compliance-snapshot` for the same pattern.
+const LINEAGE_IMPACT_CARD_URI = "ui://widget/lineage-impact.html";
+const wrappedLineageImpact = wrapToolHandler(lineageImpact);
+async function lineageImpactWithCard(args: Parameters<typeof wrappedLineageImpact>[0]) {
+  const result = await wrappedLineageImpact(args);
+  if (result.isError) return result;
+  try {
+    const structured = JSON.parse(result.content[0].text);
+    return {
+      ...result,
+      structuredContent: structured,
+      _meta: {
+        "openai/outputTemplate": LINEAGE_IMPACT_CARD_URI,
+        "ui.resourceUri": LINEAGE_IMPACT_CARD_URI,
+      },
+    };
+  } catch { return result; }
+}
+
+tool("lineage-impact",
+  "Aggregated downstream impact analysis: walks lineage (default 3 levels down, 1 up), counts unique consumers, breaks down by entity type, surfaces highest-fan-out top consumers, and (optionally) resolves the union of owners affected. Answers 'who/what breaks if I change X?' in one call instead of recursive get-lineage walks. Renders an Apps SDK card on ChatGPT clients.",
+  lineageImpactSchema.shape, lineageImpactWithCard);
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";
