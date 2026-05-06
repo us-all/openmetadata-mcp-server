@@ -140,6 +140,7 @@ import {
   listApiCollectionsSchema, listApiCollections, getApiCollectionByNameSchema, getApiCollectionByName,
   listApiEndpointsSchema, listApiEndpoints, getApiEndpointByNameSchema, getApiEndpointByName,
 } from "./tools/governance-entities.js";
+import { validateDataContractSchema, validateDataContract } from "./tools/validate-data-contract.js";
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 import { registerResources } from "./resources.js";
 import { registerPrompts } from "./prompts.js";
@@ -432,6 +433,9 @@ currentCategory = "entities";
 
 tool("list-data-contracts", "List Data Contracts (OM 1.12+) with pagination", listDataContractsSchema.shape, wrapToolHandler(listDataContracts));
 tool("get-data-contract-by-name", "Get a Data Contract by fully qualified name (OM 1.12+)", getDataContractByNameSchema.shape, wrapToolHandler(getDataContractByName));
+tool("validate-data-contract",
+  "Read-only validation of an OM 1.12+ Data Contract against the actual entity state. Reports per-rule schema findings (column existence, type, nullable/constraint match) + latest test case result for each linked qualityExpectation. Companion to the data-contract-bootstrap Prompt — bootstrap infers, this validates.",
+  validateDataContractSchema.shape, wrapToolHandler(validateDataContract));
 
 tool("list-metrics", "List business/operational Metrics (OM 1.12+) with pagination", listMetricsSchema.shape, wrapToolHandler(listMetrics));
 tool("get-metric-by-name", "Get a Metric by fully qualified name (OM 1.12+)", getMetricByNameSchema.shape, wrapToolHandler(getMetricByName));
