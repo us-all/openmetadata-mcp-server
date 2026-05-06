@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.us-all/openmetadata",
+  "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
+  "repository": {
+    "url": "https://github.com/us-all/openmetadata-mcp-server",
+    "source": "github"
+  },
+  "version": "1.14.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@us-all/openmetadata-mcp",
+      "version": "1.14.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OPENMETADATA_HOST",
+          "description": "OpenMetadata server URL (e.g. https://om.example.com).",
+          "isRequired": true
+        },
+        {
+          "name": "OPENMETADATA_TOKEN",
+          "description": "OpenMetadata bot/JWT token.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "OPENMETADATA_ALLOW_WRITE",
+          "description": "Set to 'true' to enable write/destructive tools. Default read-only.",
+          "default": "false"
+        },
+        {
+          "name": "OM_TOOLS",
+          "description": "Comma-separated category allowlist. Default: all categories enabled."
+        },
+        {
+          "name": "OM_DISABLE",
+          "description": "Comma-separated category disablelist."
+        }
+      ]
+    }
+  ]
+}

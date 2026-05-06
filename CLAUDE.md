@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.14.1** (2026-05-06): MCP Server Registry 발행 — `mcpName: "io.github.us-all/openmetadata"` 추가 + 루트 `server.json` (OPENMETADATA_HOST + OPENMETADATA_TOKEN required, ALLOW_WRITE/OM_TOOLS optional 메타데이터). 코드 변경 0줄.
 - **v1.14.0** (2026-05-05): 신규 도구 2개 — `quality-rollup`(read-only DQ aggregation: scope당 test-case 상태별 카운트, 최근 실행 timestamp, top failing top-N. scope = entityLink/tableFqn/testSuiteId/testSuiteFqn 또는 org-wide. recursive list-test-cases + per-case list-results 워크 1콜로 대체) + `run-test-suite`(test-suite의 associated ingestion pipeline 트리거. testSuiteFqn 자동 resolve, write-gated, async — 결과는 listTestCaseResults/quality-rollup으로 폴링). 도구 168→170, smoke EXPECTED_TOOL_COUNT 168→170.
 - **v1.13.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.1` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.13.0** (2026-05-05): 신규 `lineage-impact` 어그리게이션 도구 + Apps SDK UI 카드 — "이 entity 변경하면 뭐가 깨지나?" 분석. 라인지를 깊이 walk(default downstream 3, upstream 1)하면서 unique consumers 카운트, entity type별 breakdown, 최고 fan-out top consumers, 영향받는 owner union(notification 대상). 1 호출로 재귀 get-lineage 대체. 새 카테고리 도구라기보다 기존 `core` 카테고리에 추가. ChatGPT 클라이언트에서 카드 렌더 (downstream/upstream/owners 카운트 + types breakdown + top consumers). Claude 클라이언트는 JSON 응답 그대로.
