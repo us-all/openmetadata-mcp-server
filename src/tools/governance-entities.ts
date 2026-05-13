@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { omClient } from "../client.js";
 import { applyExtractFields, extractFieldsDescription } from "./extract-fields.js";
+import { assertWriteAllowed } from "./utils.js";
 
 /**
  * OM 1.12+ governance/data-asset entities (read-only — list + get-by-name only).
@@ -76,6 +77,43 @@ export async function getDataContractByName(params: z.infer<typeof getDataContra
   const data = await omClient.get(`/dataContracts/name/${encodeURIComponent(fqn)}`, query);
   if (extractFields) return data;
   return applyExtractFields(data, DEFAULTS.dataContract.get);
+}
+
+export const runDataContractValidationSchema = z.object({
+  fqn: z.string().describe("Data Contract fully qualified name"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
+});
+
+export async function runDataContractValidation(params: z.infer<typeof runDataContractValidationSchema>) {
+  assertWriteAllowed();
+  const contract = await omClient.get<{ id?: string }>(`/dataContracts/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
+  if (!contract.id) {
+    throw new Error(`Data Contract '${params.fqn}' did not include an id`);
+  }
+  const data = await omClient.post(`/dataContracts/${encodeURIComponent(contract.id)}/validate`, {});
+  if (params.extractFields) return applyExtractFields(data, params.extractFields);
+  return applyExtractFields(
+    data,
+    "id,dataContractFQN,timestamp,contractExecutionStatus,result,schemaValidation,semanticsValidation,qualityValidation,slaValidation,executionTime",
+  );
+}
+
+export const getDataContractLatestResultSchema = z.object({
+  fqn: z.string().describe("Data Contract fully qualified name"),
+  extractFields: z.string().optional().describe(extractFieldsDescription),
+});
+
+export async function getDataContractLatestResult(params: z.infer<typeof getDataContractLatestResultSchema>) {
+  const contract = await omClient.get<{ id?: string }>(`/dataContracts/name/${encodeURIComponent(params.fqn)}`, { fields: "id" });
+  if (!contract.id) {
+    throw new Error(`Data Contract '${params.fqn}' did not include an id`);
+  }
+  const data = await omClient.get(`/dataContracts/${encodeURIComponent(contract.id)}/results/latest`);
+  if (params.extractFields) return applyExtractFields(data, params.extractFields);
+  return applyExtractFields(
+    data,
+    "id,dataContractFQN,timestamp,contractExecutionStatus,result,schemaValidation,semanticsValidation,qualityValidation,slaValidation,executionTime",
+  );
 }
 
 // --- Metrics ---------------------------------------------------------------

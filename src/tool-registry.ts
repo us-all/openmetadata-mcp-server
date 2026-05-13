@@ -29,7 +29,7 @@ export const registry = new ToolRegistry<Category>({
 });
 
 const meta = createSearchToolsMetaTool(registry, CATEGORIES,
-  "Discover tools across the 154-tool OpenMetadata MCP surface — call this first to find the right tool.");
+  "Discover tools across the 172-tool OpenMetadata MCP surface — call this first to find the right tool.");
 
 export const searchToolsSchema = meta.schema;
 export const searchTools = meta.handler;

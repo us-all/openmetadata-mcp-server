@@ -2,22 +2,22 @@
 
 > **The OpenMetadata MCP that ships full CRUD across every entity type — including OM 1.12+ Data Contracts, Metrics, Search Index, API Collections, and API Endpoints that the embedded MCP doesn't cover yet.**
 >
-> 170 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and aggregations like `lineage-impact` (downstream blast-radius w/ owner notification list), `quality-rollup` (DQ status across a scope), and `get-domain-summary` (domain + 6 child entity types in one call).
+> 172 tools, 4 workflow Prompts (lineage impact / DQ investigation / glossary bootstrap / owner reassign), 7 MCP Resources, and aggregations like `lineage-impact` (downstream blast-radius w/ owner notification list), `quality-rollup` (DQ status across a scope), and official Data Contract validation.
 
 [![npm](https://img.shields.io/npm/v/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/openmetadata-mcp)](https://www.npmjs.com/package/@us-all/openmetadata-mcp)
-[![tools](https://img.shields.io/badge/tools-170-blue)](#tools)
+[![tools](https://img.shields.io/badge/tools-172-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 [![Glama MCP server](https://glama.ai/mcp/servers/us-all/openmetadata-mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/us-all/openmetadata-mcp-server)
 
 ## What it does that others don't
 
-- **OM 1.12+ entity coverage** — Data Contracts, Metrics, Search Index, API Collections, API Endpoints (10 read tools). Not in the embedded MCP yet.
+- **OM 1.12+ entity coverage** — Data Contracts, Metrics, Search Index, API Collections, API Endpoints, plus native contract validation/result retrieval. Not in the embedded MCP yet.
 - **Aggregation tools** — `lineage-impact` answers "what breaks if I change/drop X?" by walking lineage + counting consumers + breaking down by entity type + resolving the owner union for change-mgmt notifications, in one call. `get-domain-summary` returns domain + 6 child entity types via `/search/query` with `track_total_hits` in **one call** instead of 7 sequential. `get-table-summary` folds table + lineage + sample-data + DQ similarly.
 - **Semantic search** — `semantic-search` over OM 1.12+ vector index (POST `/search/vector/query`). Useful when keyword search misses synonyms.
 - **MCP Prompts** (4) — `lineage-impact-analysis`, `data-quality-investigation`, `glossary-term-bootstrap`, `owner-change-propagation`. Workflow templates the model invokes directly.
 - **MCP Resources** (7) — `om://table/{fqn}`, `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}`, `om://search/{query}`, `om://dashboard/{fqn}`, `om://pipeline/{fqn}`, `om://schema/{fqn}`.
-- **Token-efficient by design** — `extractFields` projection on 28 read tools (drops `changeDescription`/`version`/`updatedBy`/`href` noise — ~80% size reduction), `OM_TOOLS`/`OM_DISABLE` 9 categories, `search-tools` meta-tool.
+- **Token-efficient by design** — `extractFields` projection on 28 read tools (drops `changeDescription`/`version`/`updatedBy`/`href` noise — ~80% size reduction), `OM_TOOLS`/`OM_DISABLE` category toggles, `search-tools` meta-tool.
 - **Apps SDK card** — `lineage-impact` renders as a blast-radius card on ChatGPT clients (downstream/upstream counts + type breakdown + top consumers + owners-to-notify) via `_meta["openai/outputTemplate"]`. Claude clients receive the same JSON content.
 - **stdio + Streamable HTTP** — defaults to stdio. Set `MCP_TRANSPORT=http` for ChatGPT Apps SDK or remote clients (Bearer auth via `MCP_HTTP_TOKEN`).
 
@@ -37,8 +37,8 @@ OpenMetadata 1.12+ ships an embedded MCP. They are **complementary**:
 
 | | OM 1.12 embedded MCP | `@us-all/openmetadata-mcp` (this) |
 |--|----------------------|-----------------------------------|
-| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **170** (full CRUD across all entity types) |
-| OM 1.12+ entity types (Data Contracts/Metrics/Search Index/API) | partial | ✅ 10 read tools |
+| Tool count | ~10 (search, glossary basics, lineage, DQ, RCA, semantic search) | **172** (full CRUD across all entity types) |
+| OM 1.12+ entity types (Data Contracts/Metrics/Search Index/API) | partial | ✅ 12 tools |
 | Aggregation tools | ❌ | ✅ `lineage-impact`, `get-domain-summary`, `get-table-summary` |
 | MCP Prompts | ❌ | ✅ 4 |
 | MCP Resources | ❌ | ✅ 7 |
@@ -115,7 +115,7 @@ node dist/index.js
 | `MCP_HTTP_HOST` | ❌ | `127.0.0.1` | HTTP bind host (DNS rebinding protection auto-enabled for localhost) |
 | `MCP_HTTP_SKIP_AUTH` | ❌ | `false` | Skip Bearer auth — e.g. behind a reverse proxy that handles it |
 
-**Categories** (9): `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`, `meta` (always-on).
+**Categories** (10): `search`, `core`, `discovery`, `governance`, `quality`, `services`, `admin`, `events`, `entities`, `meta` (always-on).
 
 When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (public liveness).
 
@@ -123,7 +123,7 @@ When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (p
 
 | Scenario | Tools | Schema tokens | vs default |
 |----------|------:|--------------:|-----------:|
-| default (all categories) | 156 | 24,000 | — |
+| default (all categories) | 172 | 24,000 | — |
 | typical (`OM_TOOLS=search,core,governance,quality,discovery`) | 120 | 19,500 | −19% |
 | narrow (`OM_TOOLS=search,core`) | 26 | **4,600** | **−81%** |
 
@@ -152,9 +152,9 @@ URI-based read-only access:
 
 `om://table/{fqn}` (table + columns + owners + tags + joins), `om://glossary-term/{fqn}`, `om://lineage/{type}/{fqn}` (depth 3), `om://search/{query}` (top 10 keyword hits), `om://dashboard/{fqn}`, `om://pipeline/{fqn}` (with tasks), `om://schema/{fqn}`.
 
-## Tools (170)
+## Tools (172)
 
-9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
+10 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 
 | Category | Tools |
 |----------|------:|
@@ -167,7 +167,7 @@ URI-based read-only access:
 | Governance (roles / policies / users / teams / bots) | 13 |
 | Quality (test suites / cases / sample data) | 13 |
 | Stored Procedures / Queries | 11 |
-| OM 1.12+ entities (Data Contract / Metric / Search Index / API Collection / API Endpoint) | 10 |
+| OM 1.12+ entities (Data Contract / Metric / Search Index / API Collection / API Endpoint) | 12 |
 | Search (`search-metadata`, `suggest-metadata`, `semantic-search`) | 3 |
 | Aggregations (`lineage-impact`, `quality-rollup`, `get-domain-summary`, `get-table-summary`) | 4 |
 | Quality (`run-test-suite` write-gated) | 1 |
@@ -230,8 +230,8 @@ URI-based read-only access:
 ### Sample Data (6, read-only)
 `get-table-sample-data`, `get-table-sample-data-by-name`, `get-topic-sample-data`, `get-topic-sample-data-by-name`, `get-container-sample-data`, `get-container-sample-data-by-name`
 
-### OM 1.12+ entities (10)
-`list-data-contracts`, `get-data-contract-by-name`, `list-metrics`, `get-metric-by-name`, `list-search-indexes`, `get-search-index-by-name`, `list-api-collections`, `get-api-collection-by-name`, `list-api-endpoints`, `get-api-endpoint-by-name`
+### OM 1.12+ entities (12)
+`list-data-contracts`, `get-data-contract-by-name`, `run-data-contract-validation`, `get-data-contract-latest-result`, `list-metrics`, `get-metric-by-name`, `list-search-indexes`, `get-search-index-by-name`, `list-api-collections`, `get-api-collection-by-name`, `list-api-endpoints`, `get-api-endpoint-by-name`
 
 ### Aggregations
 `lineage-impact`, `quality-rollup`, `get-domain-summary`, `get-table-summary`
@@ -260,7 +260,7 @@ Targets OM 1.x. Validated against real OM backend with the OM 1.12+ entities.
 
 ## Tech stack
 
-Node.js 18+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` • zod • dotenv • vitest.
+Node.js 22+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` • zod • dotenv • vitest.
 
 JSON-Patch updates handled automatically (PATCH `application/json-patch+json` content-type).
 

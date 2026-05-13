@@ -135,6 +135,7 @@ import { semanticSearchSchema, semanticSearch } from "./tools/semantic-search.js
 import { getTableSummarySchema, getTableSummary, getDomainSummarySchema, getDomainSummary } from "./tools/aggregations.js";
 import {
   listDataContractsSchema, listDataContracts, getDataContractByNameSchema, getDataContractByName,
+  runDataContractValidationSchema, runDataContractValidation, getDataContractLatestResultSchema, getDataContractLatestResult,
   listMetricsSchema, listMetrics, getMetricByNameSchema, getMetricByName,
   listSearchIndexesSchema, listSearchIndexes, getSearchIndexByNameSchema, getSearchIndexByName,
   listApiCollectionsSchema, listApiCollections, getApiCollectionByNameSchema, getApiCollectionByName,
@@ -433,6 +434,8 @@ currentCategory = "entities";
 
 tool("list-data-contracts", "List Data Contracts (OM 1.12+) with pagination", listDataContractsSchema.shape, wrapToolHandler(listDataContracts));
 tool("get-data-contract-by-name", "Get a Data Contract by fully qualified name (OM 1.12+)", getDataContractByNameSchema.shape, wrapToolHandler(getDataContractByName));
+tool("run-data-contract-validation", "Trigger OpenMetadata's native Data Contract validation and return the official validation result. Write-gated by OPENMETADATA_ALLOW_WRITE because OM records validation results.", runDataContractValidationSchema.shape, wrapToolHandler(runDataContractValidation));
+tool("get-data-contract-latest-result", "Get the latest official OpenMetadata Data Contract validation result by contract FQN", getDataContractLatestResultSchema.shape, wrapToolHandler(getDataContractLatestResult));
 tool("validate-data-contract",
   "Read-only validation of an OM 1.12+ Data Contract against the actual entity state. Reports per-rule schema findings (column existence, type, nullable/constraint match) + latest test case result for each linked qualityExpectation. Companion to the data-contract-bootstrap Prompt — bootstrap infers, this validates.",
   validateDataContractSchema.shape, wrapToolHandler(validateDataContract));

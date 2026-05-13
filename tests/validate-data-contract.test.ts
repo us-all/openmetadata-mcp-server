@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock the OM client at module level — the tool calls omClient.get(...)
+// Mock the OM client at module level — the tools call omClient.get/post(...)
 const mockGet = vi.fn();
+const mockPost = vi.fn();
 vi.mock("../src/client.js", () => ({
-  omClient: { get: mockGet },
+  omClient: { get: mockGet, post: mockPost },
+}));
+vi.mock("../src/config.js", () => ({
+  config: { allowWrite: true },
 }));
 
 // Import after the mock is registered.
 const { validateDataContract } = await import("../src/tools/validate-data-contract.js");
+const { runDataContractValidation, getDataContractLatestResult } = await import("../src/tools/governance-entities.js");
 
 const TABLE_FQN = "service.db.schema.orders";
 
@@ -39,6 +44,7 @@ const SAMPLE_TABLE = {
 
 beforeEach(() => {
   mockGet.mockReset();
+  mockPost.mockReset();
 });
 
 function setupMocks(overrides: Partial<{
@@ -150,5 +156,52 @@ describe("validateDataContract", () => {
     await expect(
       validateDataContract({ contractFqn: "missing.contract", includeQualityResults: true }),
     ).rejects.toThrow(/Failed to fetch data contract/);
+  });
+});
+
+describe("native Data Contract result tools", () => {
+  it("runs native validation by resolving contract id from FQN", async () => {
+    mockGet.mockResolvedValueOnce({ id: "contract-id" });
+    mockPost.mockResolvedValueOnce({
+      id: "result-id",
+      dataContractFQN: "orders.contract.v1",
+      contractExecutionStatus: "Success",
+      schemaValidation: { passed: 2, failed: 0, total: 2 },
+      noisy: true,
+    });
+
+    const result = await runDataContractValidation({ fqn: "orders.contract.v1" });
+
+    expect(mockGet).toHaveBeenCalledWith("/dataContracts/name/orders.contract.v1", { fields: "id" });
+    expect(mockPost).toHaveBeenCalledWith("/dataContracts/contract-id/validate", {});
+    expect(result).toEqual({
+      id: "result-id",
+      dataContractFQN: "orders.contract.v1",
+      contractExecutionStatus: "Success",
+      schemaValidation: { passed: 2, failed: 0, total: 2 },
+    });
+  });
+
+  it("gets latest native validation result by resolving contract id from FQN", async () => {
+    mockGet
+      .mockResolvedValueOnce({ id: "contract-id" })
+      .mockResolvedValueOnce({
+        id: "result-id",
+        dataContractFQN: "orders.contract.v1",
+        contractExecutionStatus: "Failed",
+        result: "SLA missed",
+        extra: "drop",
+      });
+
+    const result = await getDataContractLatestResult({ fqn: "orders.contract.v1" });
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, "/dataContracts/name/orders.contract.v1", { fields: "id" });
+    expect(mockGet).toHaveBeenNthCalledWith(2, "/dataContracts/contract-id/results/latest");
+    expect(result).toEqual({
+      id: "result-id",
+      dataContractFQN: "orders.contract.v1",
+      contractExecutionStatus: "Failed",
+      result: "SLA missed",
+    });
   });
 });
