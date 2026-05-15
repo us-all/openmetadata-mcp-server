@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.16.2** (2026-05-15): OM 1.12.8 호환 안전판 — `list-containers` / `get-container` / `get-container-by-name`의 `fields` describe에 `children` 명시. OM 1.12.8부터 `ContainerResource.children` 기본 미반환이라 호출자가 `fields=children` 명시해야 children 펼침. 동작 변경 0줄, describe 힌트만. `@us-all/mcp-toolkit` ^1.2.1 → ^1.2.2 dep 핀 동반 cascade.
 - **v1.16.1** (2026-05-15): CI token budget regression guard 임계값 조정 — 코드 변경 0줄.
 - **v1.16.0** (2026-05-13): 신규 도구 2개 — `run-data-contract-validation`(write-gated, OM `/dataContracts/{id}/validate` 호출) + `get-data-contract-latest-result`(read-only 최신 검증 결과 조회). v1.15.0의 client-side `validate-data-contract` 와 함께 OM-native 비교 가능. Actions v5(Node 24) cascade 포함.
 - **v1.15.0** (2026-05-06): 신규 `validate-data-contract` 도구 — OM 1.12+ Data Contract을 실제 entity 상태와 read-only 비교. (1) schema 룰: 컬럼별 존재/타입/nullable/constraint 매칭 검사 (column not found → status `missing`, type mismatch → `fail`, all match → `pass`); (2) qualityExpectations: 각 링크된 testCase의 최신 result(`testCaseStatus`) 조회; (3) 전체 status는 schema/quality findings 합산해서 `passing`/`failing`/`partial`/`inconclusive`. SLA·freshness 룰은 별도 profiling 데이터 필요 → 본 도구 범위 외. aggregate() 헬퍼로 contract+table+per-test-case fan-out → 부분 실패는 caveats 노출. `data-contract-bootstrap` Prompt(스펙 추론)의 짝꿍 — 본 도구는 기존 contract을 검증. 도구 170→171, 9 신규 vitest 케이스 (총 18/18 통과). 카테고리 `entities`.

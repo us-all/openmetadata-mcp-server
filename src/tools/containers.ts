@@ -8,7 +8,7 @@ const ef = z.string().optional().describe(extractFieldsDescription);
 // --- list-containers ---
 
 export const listContainersSchema = z.object({
-  fields: z.string().optional().describe("Comma-separated fields to include (e.g. 'owners,tags,followers')"),
+  fields: z.string().optional().describe("Comma-separated fields to include (e.g. 'owners,tags,followers,children'). Note: OM 1.12.8+ no longer returns 'children' by default — pass it explicitly to fetch nested containers."),
   limit: z.coerce.number().optional().default(10).describe("Number of results per page"),
   before: z.string().optional().describe("Cursor for backward pagination"),
   after: z.string().optional().describe("Cursor for forward pagination"),
@@ -25,7 +25,7 @@ export async function listContainers(params: z.infer<typeof listContainersSchema
 
 export const getContainerSchema = z.object({
   id: z.string().describe("Container UUID"),
-  fields: z.string().optional().describe("Comma-separated fields to include"),
+  fields: z.string().optional().describe("Comma-separated fields to include (e.g. 'children,owners,tags'). Note: OM 1.12.8+ no longer returns 'children' by default."),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
   extractFields: ef,
 });
@@ -39,7 +39,7 @@ export async function getContainer(params: z.infer<typeof getContainerSchema>) {
 
 export const getContainerByNameSchema = z.object({
   fqn: z.string().describe("Fully qualified name (e.g. 'service.containerName')"),
-  fields: z.string().optional().describe("Comma-separated fields to include"),
+  fields: z.string().optional().describe("Comma-separated fields to include (e.g. 'children,owners,tags'). Note: OM 1.12.8+ no longer returns 'children' by default."),
   include: z.enum(["non-deleted", "deleted", "all"]).optional(),
   extractFields: ef,
 });
