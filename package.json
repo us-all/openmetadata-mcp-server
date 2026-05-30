@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.16.5",
+  "version": "1.16.6",
   "mcpName": "io.github.us-all/openmetadata",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",

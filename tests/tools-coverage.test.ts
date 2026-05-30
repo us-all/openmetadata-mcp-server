@@ -42,6 +42,16 @@ const topics = await import("../src/tools/topics.js");
 const containers = await import("../src/tools/containers.js");
 const search = await import("../src/tools/search.js");
 const dataQuality = await import("../src/tools/data-quality.js");
+const charts = await import("../src/tools/charts.js");
+const queries = await import("../src/tools/queries.js");
+const services = await import("../src/tools/services.js");
+const sampleData = await import("../src/tools/sample-data.js");
+const storedProcedures = await import("../src/tools/stored-procedures.js");
+const semanticSearch = await import("../src/tools/semantic-search.js");
+const bots = await import("../src/tools/bots.js");
+const events = await import("../src/tools/events.js");
+const access = await import("../src/tools/access.js");
+const lineage = await import("../src/tools/lineage.js");
 
 beforeEach(() => {
   mockGet.mockReset();
@@ -241,5 +251,135 @@ describe("data-quality (read-only)", () => {
     mockGet.mockResolvedValueOnce({ data: [] });
     await dataQuality.listTestCases({ limit: 10 });
     expect(mockGet.mock.calls[0]![0]).toBe("/dataQuality/testCases");
+  });
+});
+
+describe("charts / queries / stored-procedures", () => {
+  it("list-charts hits /charts", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await charts.listCharts({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/charts");
+  });
+
+  it("list-queries hits /queries", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await queries.listQueries({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/queries");
+  });
+
+  it("get-stored-procedure-by-name URL-encodes the FQN", async () => {
+    mockGet.mockResolvedValueOnce({});
+    await storedProcedures.getStoredProcedureByName({ fqn: "svc.db.schema.my proc" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/storedProcedures/name/svc.db.schema.my%20proc");
+  });
+});
+
+describe("services (database + dashboard)", () => {
+  it("list-database-services hits /services/databaseServices", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await services.listDatabaseServices({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/services/databaseServices");
+  });
+
+  it("list-dashboard-services hits /services/dashboardServices", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await services.listDashboardServices({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/services/dashboardServices");
+  });
+
+  it("get-database-service-by-name URL-encodes the FQN", async () => {
+    mockGet.mockResolvedValueOnce({});
+    await services.getDatabaseServiceByName({ fqn: "prod postgres" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/services/databaseServices/name/prod%20postgres");
+  });
+});
+
+describe("sample-data", () => {
+  it("get-table-sample-data hits /tables/{id}/sampleData (id in path, no query)", async () => {
+    mockGet.mockResolvedValueOnce({ sampleData: {} });
+    await sampleData.getTableSampleData({ id: "abc-123" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/tables/abc-123/sampleData");
+  });
+});
+
+describe("semantic-search (POST + size/k clamps)", () => {
+  it("posts to /search/vector/query with size capped at 100 and k capped at 10_000", async () => {
+    mockPost.mockResolvedValueOnce({ hits: [] });
+    await semanticSearch.semanticSearch({
+      query: "customer demographics",
+      size: 999,
+      k: 50000,
+      threshold: 0.5,
+    });
+    expect(mockPost).toHaveBeenCalled();
+    const [path, body] = mockPost.mock.calls[0]!;
+    expect(path).toBe("/search/vector/query");
+    expect((body as { size: number }).size).toBe(100);
+    expect((body as { k: number }).k).toBe(10000);
+    expect((body as { threshold: number }).threshold).toBe(0.5);
+  });
+
+  it("only sends filters that the caller actually supplied", async () => {
+    mockPost.mockResolvedValueOnce({ hits: [] });
+    await semanticSearch.semanticSearch({
+      query: "x",
+      size: 10,
+      k: 500,
+      threshold: 0,
+      entityType: ["table"],
+    });
+    const [, body] = mockPost.mock.calls[0]!;
+    const filters = (body as { filters?: Record<string, unknown> }).filters;
+    expect(filters).toEqual({ entityType: ["table"] });
+  });
+});
+
+describe("bots / events / access", () => {
+  it("list-bots hits /bots", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await bots.listBots({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/bots");
+  });
+
+  it("list-events (subscriptions) hits /events/subscriptions", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await events.listEvents({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/events/subscriptions");
+  });
+
+  it("list-roles + list-policies hit /roles and /policies respectively", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await access.listRoles({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/roles");
+
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await access.listPolicies({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[1]![0]).toBe("/policies");
+  });
+});
+
+describe("lineage", () => {
+  it("get-lineage hits /lineage/{entity}/{id} with depth params", async () => {
+    mockGet.mockResolvedValueOnce({ nodes: [] });
+    await lineage.getLineage({
+      entity: "table",
+      id: "abc-123",
+      upstreamDepth: 2,
+      downstreamDepth: 4,
+    });
+    const [path, query] = mockGet.mock.calls[0]!;
+    expect(path).toBe("/lineage/table/abc-123");
+    expect(query).toMatchObject({ upstreamDepth: 2, downstreamDepth: 4 });
+  });
+
+  it("get-lineage-by-name URL-encodes the FQN", async () => {
+    mockGet.mockResolvedValueOnce({ nodes: [] });
+    await lineage.getLineageByName({
+      entity: "table",
+      fqn: "svc.db.schema.order items",
+      upstreamDepth: 1,
+      downstreamDepth: 1,
+    });
+    expect(mockGet.mock.calls[0]![0]).toBe("/lineage/table/name/svc.db.schema.order%20items");
   });
 });
