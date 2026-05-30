@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.7] - 2026-05-30
+
+### Added
+
+- **`governance-entities` list-path coverage** (5 OM 1.12+ entity types: data-contracts, metrics, search-indexes, api-collections, api-endpoints). Validate/result paths were already covered by `validate-data-contract.test.ts` from v1.15.0.
+- Test count: **55 → 60** (+5).
+- The remaining categories (`aggregations`, `lineage-impact`, `quality-rollup`) all use fan-out aggregation patterns that require multi-call mock orchestration — left out of this pure-path-regression file by design.
+
 ## [1.16.6] - 2026-05-30
 
 ### Added

@@ -52,6 +52,7 @@ const bots = await import("../src/tools/bots.js");
 const events = await import("../src/tools/events.js");
 const access = await import("../src/tools/access.js");
 const lineage = await import("../src/tools/lineage.js");
+const governanceEntities = await import("../src/tools/governance-entities.js");
 
 beforeEach(() => {
   mockGet.mockReset();
@@ -381,5 +382,37 @@ describe("lineage", () => {
       downstreamDepth: 1,
     });
     expect(mockGet.mock.calls[0]![0]).toBe("/lineage/table/name/svc.db.schema.order%20items");
+  });
+});
+
+describe("governance-entities (OM 1.12+ new entity types — list paths)", () => {
+  it("list-data-contracts hits /dataContracts", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await governanceEntities.listDataContracts({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/dataContracts");
+  });
+
+  it("list-metrics hits /metrics", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await governanceEntities.listMetrics({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/metrics");
+  });
+
+  it("list-search-indexes hits /searchIndexes", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await governanceEntities.listSearchIndexes({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/searchIndexes");
+  });
+
+  it("list-api-collections hits /apiCollections", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await governanceEntities.listApiCollections({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/apiCollections");
+  });
+
+  it("list-api-endpoints hits /apiEndpoints", async () => {
+    mockGet.mockResolvedValueOnce({ data: [] });
+    await governanceEntities.listApiEndpoints({ limit: 10, include: "non-deleted" });
+    expect(mockGet.mock.calls[0]![0]).toBe("/apiEndpoints");
   });
 });
