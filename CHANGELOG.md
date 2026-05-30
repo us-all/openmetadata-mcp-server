@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.5] - 2026-05-30
+
+### Added
+
+- **Representative regression coverage for 14 entity tool categories** via `tests/tools-coverage.test.ts`. Targets the three things most likely to silently break on a refactor: REST path, FQN/name URL-encoding, and the search-tool param rename / size cap.
+  - `tables` (list-path + default-fields behavior on `get-table` + FQN encoding on `get-table-by-name`)
+  - `glossary`, `domains`, `databases`, `schemas`, `teams`, `users`, `tags`, `dashboards`, `pipelines`, `mlmodels`, `topics`, `containers` (path + URL-encoding on by-name variants for `domains`, `users`, `containers`)
+  - `search-metadata` (camelCase → snake_case param rename for `trackTotalHits`/`queryFilter`/`sortField`/`sortOrder`, and the `size ≤ 100` clamp)
+  - `data-quality` (list-test-cases path)
+- Test count: **20 → 41** (+21). One smoke per "shape change" is intentional; deeper assertions live in `validate-data-contract.test.ts`.
+
+(No code or schema change. CI will now catch path/encoding regressions across 14/32 categories instead of 1.)
+
 ## [1.6.1] - 2026-05-01
 
 ### Added
