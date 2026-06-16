@@ -1,6 +1,6 @@
 {
   "name": "@us-all/openmetadata-mcp",
-  "version": "1.16.8",
+  "version": "1.16.9",
   "mcpName": "io.github.us-all/openmetadata",
   "description": "OpenMetadata MCP server - metadata management, lineage, search, data quality, and more",
   "type": "module",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@us-all/mcp-toolkit": "^1.2.3",
+    "@us-all/mcp-toolkit": "^1.2.4",
     "dotenv": "^17.4.2",
     "zod": "^4.4.2"
   },
