@@ -78,6 +78,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.16.10** (2026-06-19): `@us-all/mcp-toolkit ^1.3.0` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.16.2** (2026-05-15): OM 1.12.8 호환 안전판 — `list-containers` / `get-container` / `get-container-by-name`의 `fields` describe에 `children` 명시. OM 1.12.8부터 `ContainerResource.children` 기본 미반환이라 호출자가 `fields=children` 명시해야 children 펼침. 동작 변경 0줄, describe 힌트만. `@us-all/mcp-toolkit` ^1.2.1 → ^1.2.2 dep 핀 동반 cascade.
 - **v1.16.1** (2026-05-15): CI token budget regression guard 임계값 조정 — 코드 변경 0줄.
 - **v1.16.0** (2026-05-13): 신규 도구 2개 — `run-data-contract-validation`(write-gated, OM `/dataContracts/{id}/validate` 호출) + `get-data-contract-latest-result`(read-only 최신 검증 결과 조회). v1.15.0의 client-side `validate-data-contract` 와 함께 OM-native 비교 가능. Actions v5(Node 24) cascade 포함.
